@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   FolderKanban,
   LogOut,
+  UploadCloud,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -19,6 +20,7 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof Clip
     { to: '/work-orders', label: 'Work Order Queue', icon: ClipboardList },
     { to: '/project-trackers', label: 'Project Trackers', icon: FolderKanban },
     { to: '/inventory', label: 'Inventory', icon: Boxes },
+    { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
   ],
   admin: [
     { to: '/reports', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,6 +28,7 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof Clip
     { to: '/project-trackers', label: 'Project Trackers', icon: FolderKanban },
     { to: '/inventory', label: 'Inventory', icon: Boxes },
     { to: '/billing', label: 'Billing', icon: Receipt },
+    { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
   ],
 };
 

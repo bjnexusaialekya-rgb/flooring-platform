@@ -9,6 +9,7 @@ import { InventoryPage } from './pages/InventoryPage';
 import { BillingPage } from './pages/BillingPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { ProjectTrackerPage } from './pages/ProjectTrackerPage';
+import { TemplateImportPage } from './pages/TemplateImportPage';
 
 function ProtectedRoutes({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -76,6 +77,14 @@ export default function App() {
               element={
                 <RoleGuard roles={['staff', 'admin']}>
                   <ProjectTrackerPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/templates/import"
+              element={
+                <RoleGuard roles={['staff', 'admin']}>
+                  <TemplateImportPage />
                 </RoleGuard>
               }
             />

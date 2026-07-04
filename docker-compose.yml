@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: flooring_pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: flooring_admin
+      POSTGRES_PASSWORD: change_me_local_dev
+      POSTGRES_DB: flooring_platform
+    ports:
+      - "5434:5432"
+    volumes:
+      - flooring_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flooring_admin -d flooring_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  flooring_pg_data:

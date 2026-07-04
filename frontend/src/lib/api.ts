@@ -54,3 +54,20 @@ export type InventoryItem = {
   reorder_threshold: number;
   needs_reorder: boolean;
 };
+
+export type TemplateImportRowError = { line: number; error: string };
+
+export type TemplateImportResultRow = {
+  propertyName: string;
+  planName: string;
+  status: 'created' | 'updated' | 'failed';
+  templateId?: string;
+  roomCount?: number;
+  error?: string;
+};
+
+export type TemplateImportResponse = {
+  templatesProcessed: number;
+  results: TemplateImportResultRow[];
+  rowErrors: TemplateImportRowError[];
+};
