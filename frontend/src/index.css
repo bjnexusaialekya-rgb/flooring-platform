@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+/* ============================================================
+   DESIGN TOKENS — "cool SaaS" register, in the same general family
+   as the named CRE/property-management competitors (Prism, AppFolio,
+   Propertyware: slate neutrals, blue-violet/teal accents) but with
+   hue and saturation deliberately offset so it reads as its own
+   brand rather than a lift of any one of them.
+
+   Signature idea unchanged from before: the pricing-blind boundary
+   is the platform's real differentiator. Site-Amber is reserved
+   EXCLUSIVELY for anything price/cost-bearing and staff-only — it
+   never appears in client-facing UI. Kept warm on purpose: against
+   a cool palette it reads as a clear, intentional signal rather
+   than blending into a "generic SaaS blue" accent set.
+   ============================================================ */
+@theme {
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Neutrals — cool slate, not warm brown-charcoal anymore, but also
+     not pure navy-black (that would read as a direct AppFolio/Prism
+     lift). Slight blue-gray undertone only. */
+  --color-ink: #1f2430;
+  --color-ink-soft: #454c5c;
+  --color-paper: #f5f6f9;
+  --color-panel: #ffffff;
+  --color-concrete: #8a90a1;
+  --color-concrete-light: #dde1ea;
+
+  /* Primary — indigo-violet. Same "trustworthy/institutional" register
+     as the blue/teal convention those competitors use, shifted toward
+     violet so it isn't the same hue as AppFolio's blue or Prism's teal. */
+  --color-primary: #5b5fc7;
+  --color-primary-soft: #e9e9fa;
+  --color-primary-dark: #4245a0;
+
+  /* Secondary accent — cyan-leaning teal, used for second-tier
+     interactive moments. Distinct enough from the primary indigo to
+     avoid a one-note look, and shifted more cyan than the blue-teal
+     AppFolio/Prism typically use. */
+  --color-plum: #0e8fa0;
+  --color-plum-soft: #e2f4f6;
+  --color-plum-dark: #0a6b78;
+
+  /* Site-Amber — unchanged. Reserved EXCLUSIVELY for the
+     pricing-blind boundary. Never reused for a client-visible
+     status pill. Deliberately warm against the cool palette. */
+  --color-amber: #c17f3e;
+  --color-amber-soft: #f7ecdf;
+  --color-amber-dark: #96602c;
+
+  /* Status system — remapped into the cool family (slate, indigo,
+     teal, cyan, sky) instead of the previous warm terracotta/gold
+     set, so status pills feel native to the new palette. */
+  --color-status-submitted: #7d8496;
+  --color-status-submitted-soft: #eaecf1;
+  --color-status-priced: #0e8fa0;
+  --color-status-priced-soft: #e2f4f6;
+  --color-status-approved: #5b5fc7;
+  --color-status-approved-soft: #e9e9fa;
+  --color-status-scheduled: #2f7fb8;
+  --color-status-scheduled-soft: #e1eef7;
+  --color-status-completed: #1a8a6e;
+  --color-status-completed-soft: #e1f3ec;
+  --color-status-billing: #6d5bc7;
+  --color-status-billing-soft: #ece9fa;
+  --color-status-invoiced: #2f9e6f;
+  --color-status-invoiced-soft: #e2f5ec;
+
+  --color-success: #2f9e6f;
+  --color-success-soft: #e2f5ec;
+  --color-danger: #c0453a;
+  --color-danger-soft: #f8e5e3;
+}
+
+/* Premium gradient — indigo/teal, cool-toned to match the new palette
+   without going pure navy-black. */
+.auth-gradient-bg {
+  background:
+    radial-gradient(circle at 25% 15%, #4245a0 0%, transparent 45%),
+    radial-gradient(circle at 80% 75%, #0a6b78 0%, transparent 50%),
+    #171a22;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+/* Reusable "cut line" — the literal rendering of the pricing-blind
+   boundary. Used once per staff screen, directly above any
+   staff-only/price-bearing section. */
+.boundary-line {
+  position: relative;
+  border-top: 2px dashed var(--color-amber);
+  margin: 1.5rem 0 1rem 0;
+  padding-top: 0.25rem;
+}
+.boundary-line::before {
+  content: "STAFF ONLY — NOT VISIBLE TO CLIENT";
+  position: absolute;
+  top: -0.65rem;
+  left: 0;
+  background: var(--color-paper);
+  padding: 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--color-amber-dark);
+}
