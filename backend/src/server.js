@@ -17,6 +17,7 @@ const projectTrackerRoutes = require('./routes/projectTrackerRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const userLookupRoutes = require('./routes/userLookupRoutes');
 const clientBillingRoutes = require('./routes/clientBillingRoutes');
+const adminSetupRoutes = require('./routes/adminSetupRoutes');
 
 const app = express();
 
@@ -83,6 +84,7 @@ app.use('/project-trackers', projectTrackerRoutes);
 app.use('/reports', reportRoutes);
 app.use('/users', userLookupRoutes);
 app.use('/client-billing', clientBillingRoutes);
+app.use('/admin-setup', adminSetupRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
