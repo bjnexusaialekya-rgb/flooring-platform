@@ -77,6 +77,15 @@ router.post(
               `UPDATE billing_batches SET batch_status = 'closed' WHERE id = $1`,
               [updated.rows[0].billing_batch_id]
             );
+            try {
+              const { syncBatchToQuickBooks, markQboInvoicePaid } = require('../services/qboSyncWorker');
+              const syncResult = await syncBatchToQuickBooks(updated.rows[0].billing_batch_id);
+              if (syncResult.qboInvoiceId) {
+                await markQboInvoicePaid(syncResult.qboInvoiceId, Number(intent.amount_received) / 100);
+              }
+            } catch (qboErr) {
+              console.error('Auto QBO sync/mark-paid after payment failed:', qboErr.message);
+            }
           } else {
             // A succeeded PaymentIntent with no matching payments row
             // is a real anomaly (created outside this app, or the

@@ -6,10 +6,6 @@ const { requireRole } = require('../middleware/role');
 const router = express.Router();
 router.use(requireAuth, requireRole('admin'));
 
-/**
- * GET /admin-setup/clients
- * Simple id+name list for populating dropdowns during onboarding.
- */
 router.get('/clients', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, corporate_name FROM clients ORDER BY corporate_name');
@@ -20,21 +16,40 @@ router.get('/clients', async (req, res) => {
   }
 });
 
-/**
- * POST /admin-setup/clients
- * Creates a brand-new corporate client (company). This is the step
- * that previously required a direct database INSERT before a new
- * property manager's login could be created at all.
- */
 router.post('/clients', async (req, res) => {
-  const { corporateName } = req.body;
+  const {
+    corporateName,
+    paymentTerms,
+    depositType,
+    depositValue,
+    agreementSigned,
+    agreementDate,
+    advanceAgreed,
+    advanceAmount,
+  } = req.body;
+
   if (!corporateName) {
     return res.status(400).json({ error: 'corporateName is required' });
   }
+
   try {
     const result = await pool.query(
-      `INSERT INTO clients (corporate_name) VALUES ($1) RETURNING id, corporate_name`,
-      [corporateName]
+      `INSERT INTO clients (
+         corporate_name, payment_terms, deposit_type, deposit_value,
+         agreement_signed, agreement_date, advance_agreed, advance_amount
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, corporate_name, payment_terms, agreement_signed, advance_agreed, advance_amount`,
+      [
+        corporateName,
+        paymentTerms || 'full_only',
+        depositType || null,
+        depositValue || null,
+        agreementSigned === true,
+        agreementSigned === true ? (agreementDate || null) : null,
+        advanceAgreed === true,
+        advanceAgreed === true ? (advanceAmount || null) : null,
+      ]
     );
     return res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -43,12 +58,6 @@ router.post('/clients', async (req, res) => {
   }
 });
 
-/**
- * POST /admin-setup/properties
- * Creates a property under an existing client. Required before any
- * work order, floor-plan template, or building/unit can exist for
- * that client.
- */
 router.post('/properties', async (req, res) => {
   const { clientId, name, streetAddress, city, state, zipCode } = req.body;
   if (!clientId || !name) {
@@ -63,6 +72,58 @@ router.post('/properties', async (req, res) => {
     return res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error('Create property error:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/payment-status', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+         c.corporate_name, p.name AS property_name, bb.id AS batch_id,
+         bb.payment_stage, bb.batch_status, pay.status AS payment_status,
+         pay.amount, bb.qbo_invoice_id, bb.created_at
+       FROM billing_batches bb
+       JOIN properties p ON p.id = bb.property_id
+       JOIN clients c ON c.id = p.client_id
+       LEFT JOIN payments pay ON pay.billing_batch_id = bb.id
+       ORDER BY bb.created_at DESC`
+    );
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Payment status dashboard error:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/advance-status', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, corporate_name, advance_amount
+       FROM clients
+       WHERE advance_agreed = true AND advance_cleared = false`
+    );
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Advance status error:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.patch('/clients/:id/clear-advance', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE clients SET advance_cleared = true, advance_cleared_at = NOW()
+       WHERE id = $1 AND advance_agreed = true
+       RETURNING id, corporate_name, advance_cleared, advance_cleared_at`,
+      [req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Client not found or no advance agreed' });
+    }
+    return res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Clear advance error:', err.message);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });

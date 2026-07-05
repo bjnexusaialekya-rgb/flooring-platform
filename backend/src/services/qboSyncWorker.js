@@ -203,4 +203,29 @@ async function syncBatchToQuickBooks(batchId) {
   }
 }
 
-module.exports = { syncBatchToQuickBooks };
+async function markQboInvoicePaid(qboInvoiceId, amountPaid) {
+  const accessToken = await getValidAccessToken(process.env.QBO_REALM_ID);
+  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${process.env.QBO_REALM_ID}/payment`;
+
+  await axios.post(
+    endpoint,
+    {
+      TotalAmt: amountPaid,
+      Line: [
+        {
+          Amount: amountPaid,
+          LinkedTxn: [{ TxnId: qboInvoiceId, TxnType: 'Invoice' }],
+        },
+      ],
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    }
+  );
+}
+
+module.exports = { syncBatchToQuickBooks, markQboInvoicePaid };

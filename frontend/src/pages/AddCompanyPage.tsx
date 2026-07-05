@@ -4,12 +4,17 @@ import { api } from '../lib/api';
 type ClientOption = { id: string; corporate_name: string };
 
 export function AddCompanyPage() {
-  // --- Create Company ---
   const [corporateName, setCorporateName] = useState('');
+  const [paymentTerms, setPaymentTerms] = useState<'full_only' | 'deposit_required'>('full_only');
+  const [depositType, setDepositType] = useState<'percent' | 'fixed'>('percent');
+  const [depositValue, setDepositValue] = useState('');
+  const [agreementSigned, setAgreementSigned] = useState<'yes' | 'no'>('no');
+  const [agreementDate, setAgreementDate] = useState('');
+  const [advanceAgreed, setAdvanceAgreed] = useState<'yes' | 'no'>('no');
+  const [advanceAmount, setAdvanceAmount] = useState('');
   const [companyResult, setCompanyResult] = useState<string | null>(null);
   const [companyError, setCompanyError] = useState<string | null>(null);
 
-  // --- Add Property ---
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [clientId, setClientId] = useState('');
   const [propertyName, setPropertyName] = useState('');
@@ -38,9 +43,24 @@ export function AddCompanyPage() {
     setCompanyError(null);
     setCompanyResult(null);
     try {
-      const created = await api.post<ClientOption>('/admin-setup/clients', { corporateName });
+      const created = await api.post<{ corporate_name: string }>('/admin-setup/clients', {
+        corporateName,
+        paymentTerms,
+        depositType: paymentTerms === 'deposit_required' ? depositType : undefined,
+        depositValue: paymentTerms === 'deposit_required' ? Number(depositValue) : undefined,
+        agreementSigned: agreementSigned === 'yes',
+        agreementDate: agreementSigned === 'yes' ? agreementDate : undefined,
+        advanceAgreed: advanceAgreed === 'yes',
+        advanceAmount: advanceAgreed === 'yes' ? Number(advanceAmount) : undefined,
+      });
       setCompanyResult(`Company "${created.corporate_name}" created.`);
       setCorporateName('');
+      setPaymentTerms('full_only');
+      setDepositValue('');
+      setAgreementSigned('no');
+      setAgreementDate('');
+      setAdvanceAgreed('no');
+      setAdvanceAmount('');
       await loadClients();
     } catch (err) {
       setCompanyError(err instanceof Error ? err.message : 'Failed to create company');
@@ -71,8 +91,7 @@ export function AddCompanyPage() {
     }
   }
 
-  const inputClass =
-    'w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm';
+  const inputClass = 'w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm';
   const labelClass = 'block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5';
 
   return (
@@ -98,6 +117,95 @@ export function AddCompanyPage() {
               placeholder="e.g. Greystar Real Estate Partners"
             />
           </div>
+
+          <div>
+            <label className={labelClass}>Payment Terms</label>
+            <select
+              value={paymentTerms}
+              onChange={(e) => setPaymentTerms(e.target.value as 'full_only' | 'deposit_required')}
+              className={inputClass}
+            >
+              <option value="full_only">Full payment only</option>
+              <option value="deposit_required">Deposit required</option>
+            </select>
+          </div>
+          {paymentTerms === 'deposit_required' && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Deposit Type</label>
+                <select
+                  value={depositType}
+                  onChange={(e) => setDepositType(e.target.value as 'percent' | 'fixed')}
+                  className={inputClass}
+                >
+                  <option value="percent">% of total</option>
+                  <option value="fixed">Fixed amount</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>{depositType === 'percent' ? 'Percent' : 'Amount ($)'}</label>
+                <input
+                  required
+                  type="number"
+                  value={depositValue}
+                  onChange={(e) => setDepositValue(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className={labelClass}>Agreement Signed?</label>
+            <select
+              value={agreementSigned}
+              onChange={(e) => setAgreementSigned(e.target.value as 'yes' | 'no')}
+              className={inputClass}
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+          {agreementSigned === 'yes' && (
+            <div>
+              <label className={labelClass}>Agreement Date</label>
+              <input
+                required
+                type="date"
+                value={agreementDate}
+                onChange={(e) => setAgreementDate(e.target.value)}
+                className={inputClass}
+              />
+              <p className="text-xs text-[var(--color-concrete)] mt-1">
+                PDF upload available after company creation (separate step).
+              </p>
+            </div>
+          )}
+
+          <div>
+            <label className={labelClass}>Advance Amount Agreed?</label>
+            <select
+              value={advanceAgreed}
+              onChange={(e) => setAdvanceAgreed(e.target.value as 'yes' | 'no')}
+              className={inputClass}
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+          {advanceAgreed === 'yes' && (
+            <div>
+              <label className={labelClass}>Advance Amount ($)</label>
+              <input
+                required
+                type="number"
+                value={advanceAmount}
+                onChange={(e) => setAdvanceAmount(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          )}
+
           {companyError && (
             <div className="text-sm text-[var(--color-danger)] bg-[var(--color-danger-soft)] rounded-md px-3 py-2">
               {companyError}
@@ -157,11 +265,7 @@ export function AddCompanyPage() {
           </div>
           <div>
             <label className={labelClass}>Street Address</label>
-            <input
-              value={streetAddress}
-              onChange={(e) => setStreetAddress(e.target.value)}
-              className={inputClass}
-            />
+            <input value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} className={inputClass} />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
