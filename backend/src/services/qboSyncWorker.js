@@ -60,7 +60,6 @@ async function syncBatchToQuickBooks(batchId) {
       ItemRef: { name: row.sku },
       UnitPrice: Number(row.unit_price_charged),
       Qty: Number(row.quantity_calculated),
-      ClassRef: { name: `${row.building_identifier}-${row.unit_number}` },
     },
   }));
 
@@ -94,7 +93,7 @@ async function syncBatchToQuickBooks(batchId) {
     await pool.query(
       `INSERT INTO qbo_sync_failures (billing_batch_id, raw_payload, error_message)
        VALUES ($1, $2, $3)`,
-      [batchId, JSON.stringify(invoicePayload), err.message]
+      [batchId, JSON.stringify(invoicePayload), JSON.stringify(err.response?.data || err.message)]
     );
     throw err;
   }
