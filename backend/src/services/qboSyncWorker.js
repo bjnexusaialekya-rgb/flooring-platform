@@ -2,6 +2,96 @@ const axios = require('axios');
 const { pool } = require('../db/pool');
 const { getValidAccessToken } = require('./qboTokenManager');
 
+function escapeQboString(value) {
+  return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+async function qboQuery(accessToken, query) {
+  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${process.env.QBO_REALM_ID}/query`;
+  const res = await axios.get(endpoint, {
+    params: { query },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+    },
+  });
+  return res.data.QueryResponse || {};
+}
+
+// Sandbox QBO companies start empty — Customer/Item records referenced
+// by name don't exist yet, and QBO requires the internal Id, not the
+// name, on invoice lines. This looks the record up first and creates
+// it on the fly if missing, so the sandbox "fills itself in" as real
+// batches get synced.
+async function findOrCreateCustomer(accessToken, corporateName) {
+  const safeName = escapeQboString(corporateName);
+  const found = await qboQuery(
+    accessToken,
+    `SELECT Id FROM Customer WHERE DisplayName = '${safeName}'`
+  );
+  if (found.Customer && found.Customer.length > 0) {
+    return found.Customer[0].Id;
+  }
+
+  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${process.env.QBO_REALM_ID}/customer`;
+  const created = await axios.post(
+    endpoint,
+    { DisplayName: corporateName },
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    }
+  );
+  return created.data.Customer.Id;
+}
+
+let cachedIncomeAccountId = null;
+async function getIncomeAccountId(accessToken) {
+  if (cachedIncomeAccountId) return cachedIncomeAccountId;
+  const result = await qboQuery(
+    accessToken,
+    `SELECT Id FROM Account WHERE AccountType = 'Income' MAXRESULTS 1`
+  );
+  if (!result.Account || result.Account.length === 0) {
+    throw new Error('No Income account found in QBO sandbox — cannot create Item');
+  }
+  cachedIncomeAccountId = result.Account[0].Id;
+  return cachedIncomeAccountId;
+}
+
+async function findOrCreateItem(accessToken, sku, materialName) {
+  const safeSku = escapeQboString(sku);
+  const found = await qboQuery(
+    accessToken,
+    `SELECT Id FROM Item WHERE Name = '${safeSku}'`
+  );
+  if (found.Item && found.Item.length > 0) {
+    return found.Item[0].Id;
+  }
+
+  const incomeAccountId = await getIncomeAccountId(accessToken);
+  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${process.env.QBO_REALM_ID}/item`;
+  const created = await axios.post(
+    endpoint,
+    {
+      Name: sku,
+      Type: 'Service',
+      IncomeAccountRef: { value: incomeAccountId },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    }
+  );
+  return created.data.Item.Id;
+}
+
 /**
  * Pushes ONE consolidated invoice per billing_batch to QuickBooks —
  * this is the whole point of the batching step: corporate AP gets one
@@ -51,25 +141,39 @@ async function syncBatchToQuickBooks(batchId) {
     throw new Error(`No billable line items found for batch ${batchId}`);
   }
 
-  const qboLineItems = compiled.rows.map((row, index) => ({
-    LineNum: index + 1,
-    Description: `${row.property_name} | ${row.building_identifier} Unit ${row.unit_number} — ${row.material_name}`,
-    Amount: Number((row.quantity_calculated * row.unit_price_charged).toFixed(2)),
-    DetailType: 'SalesItemLineDetail',
-    SalesItemLineDetail: {
-      ItemRef: { name: row.sku },
-      UnitPrice: Number(row.unit_price_charged),
-      Qty: Number(row.quantity_calculated),
-    },
-  }));
-
-  const invoicePayload = {
-    Line: qboLineItems,
-    CustomerRef: { name: compiled.rows[0].corporate_name },
-  };
-
+  let invoicePayload;
   try {
     const accessToken = await getValidAccessToken(process.env.QBO_REALM_ID);
+
+    // Resolve real QBO internal Ids before building the payload —
+    // QBO rejects name-only refs with an opaque NumberFormatException
+    // when the sandbox has no matching record yet.
+    const customerId = await findOrCreateCustomer(accessToken, compiled.rows[0].corporate_name);
+
+    const itemIdBySku = {};
+    for (const row of compiled.rows) {
+      if (!itemIdBySku[row.sku]) {
+        itemIdBySku[row.sku] = await findOrCreateItem(accessToken, row.sku, row.material_name);
+      }
+    }
+
+    const qboLineItems = compiled.rows.map((row, index) => ({
+      LineNum: index + 1,
+      Description: `${row.property_name} | ${row.building_identifier} Unit ${row.unit_number} — ${row.material_name}`,
+      Amount: Number((row.quantity_calculated * row.unit_price_charged).toFixed(2)),
+      DetailType: 'SalesItemLineDetail',
+      SalesItemLineDetail: {
+        ItemRef: { value: itemIdBySku[row.sku] },
+        UnitPrice: Number(row.unit_price_charged),
+        Qty: Number(row.quantity_calculated),
+      },
+    }));
+
+    invoicePayload = {
+      Line: qboLineItems,
+      CustomerRef: { value: customerId },
+    };
+
     const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${process.env.QBO_REALM_ID}/invoice`;
 
     const qboResponse = await axios.post(endpoint, invoicePayload, {
@@ -93,7 +197,7 @@ async function syncBatchToQuickBooks(batchId) {
     await pool.query(
       `INSERT INTO qbo_sync_failures (billing_batch_id, raw_payload, error_message)
        VALUES ($1, $2, $3)`,
-      [batchId, JSON.stringify(invoicePayload), JSON.stringify(err.response?.data || err.message)]
+      [batchId, JSON.stringify(invoicePayload || null), JSON.stringify(err.response?.data || err.message)]
     );
     throw err;
   }
