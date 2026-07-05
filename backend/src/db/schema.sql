@@ -125,6 +125,7 @@ CREATE TABLE work_orders (
     billing_batch_id UUID REFERENCES billing_batches(id) ON DELETE SET NULL,
     submitted_by UUID REFERENCES users(id) NOT NULL,
     assigned_to UUID REFERENCES users(id), -- installer/crew lead, per RFP's "basic install-date + assignee"
+    scheduled_date DATE, -- staff-set install/turn date, the other half of "basic install-date assignment"
     billing_contact TEXT, -- corporate AP contact, deliberately separate from submitter (Open Item #1 default)
     po_number TEXT,
     target_turn_date DATE,

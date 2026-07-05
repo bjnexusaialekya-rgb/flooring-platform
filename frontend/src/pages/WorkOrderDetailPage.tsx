@@ -30,6 +30,7 @@ export function WorkOrderDetailPage() {
   const [staffLineItems, setStaffLineItems] = useState<StaffLineItem[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [assignedTo, setAssignedTo] = useState<string>('');
+  const [scheduledDate, setScheduledDate] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
@@ -54,6 +55,7 @@ export function WorkOrderDetailPage() {
         .then((res) => {
           setStaffLineItems(res.lineItems);
           setAssignedTo(res.assigned_to ?? '');
+          setScheduledDate((res as any).scheduled_date ?? '');
         })
         .catch(() => {
           /* non-fatal: pricing panel just won't populate */
@@ -62,11 +64,12 @@ export function WorkOrderDetailPage() {
     }
   }, [id, isStaff]);
 
-  async function saveAssignment(newAssignedTo: string) {
+  async function saveAssignment(newAssignedTo: string, newScheduledDate?: string) {
     if (!id) return;
     setAssignedTo(newAssignedTo);
+    const dateToSend = newScheduledDate !== undefined ? newScheduledDate : scheduledDate;
     try {
-      await api.patch(`/work-orders/${id}/assign`, { assignedTo: newAssignedTo || null });
+      await api.patch(`/work-orders/${id}/assign`, { assignedTo: newAssignedTo || null, scheduledDate: dateToSend || null });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to assign');
     }
@@ -148,6 +151,13 @@ export function WorkOrderDetailPage() {
                   </option>
                 ))}
               </select>
+              <label className="text-xs text-[var(--color-concrete)] ml-3">Install date</label>
+              <input
+                type="date"
+                value={scheduledDate}
+                onChange={(e) => { setScheduledDate(e.target.value); saveAssignment(assignedTo, e.target.value); }}
+                className="text-xs px-2 py-1.5 rounded-md border border-[var(--color-concrete-light)] bg-white"
+              />
             </div>
           )}
           {isStaff && NEXT_STATUS[order.status] && (

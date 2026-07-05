@@ -10,6 +10,8 @@ import { BillingPage } from './pages/BillingPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { ProjectTrackerPage } from './pages/ProjectTrackerPage';
 import { TemplateImportPage } from './pages/TemplateImportPage';
+import { ClientBillingPage } from './pages/ClientBillingPage';
+import { AddClientPage } from './pages/AddClientPage';
 
 function ProtectedRoutes({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -49,6 +51,14 @@ export default function App() {
               }
             />
             <Route
+              path="/my-billing"
+              element={
+                <RoleGuard roles={['client']}>
+                  <ClientBillingPage />
+                </RoleGuard>
+              }
+            />
+            <Route
               path="/inventory"
               element={
                 <RoleGuard roles={['staff', 'admin']}>
@@ -69,6 +79,14 @@ export default function App() {
               element={
                 <RoleGuard roles={['admin']}>
                   <ReportsPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/add-client"
+              element={
+                <RoleGuard roles={['admin']}>
+                  <AddClientPage />
                 </RoleGuard>
               }
             />

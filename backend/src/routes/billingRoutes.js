@@ -62,6 +62,28 @@ router.post('/consolidated-statement', async (req, res) => {
 });
 
 /**
+ * GET /billing/batches
+ * Lists all billing batches across properties, most recent first, so
+ * staff can find and act on a previously-created batch instead of
+ * only ever seeing the one just created in the current session.
+ */
+router.get("/batches", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT bb.id, bb.batch_status, bb.qbo_invoice_id, bb.billing_period_start,
+              bb.billing_period_end, bb.created_at, p.name AS property_name
+       FROM billing_batches bb
+       JOIN properties p ON p.id = bb.property_id
+       ORDER BY bb.created_at DESC`
+    );
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("List billing batches error:", err.message);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
  * GET /billing/batches/:id
  * Full breakdown of a batch, INCLUDING price fields — this route is
  * staff/admin only (enforced above), so the pricing-blind boundary

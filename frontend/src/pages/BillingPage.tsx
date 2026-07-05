@@ -4,6 +4,15 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { api } from '../lib/api';
 
 type SyncFailure = { id: string; billing_batch_id: string; error_message: string; failed_at: string };
+type BillingBatch = {
+  id: string;
+  batch_status: string;
+  qbo_invoice_id: string | null;
+  billing_period_start: string;
+  billing_period_end: string;
+  created_at: string;
+  property_name: string;
+};
 
 // Publishable key is safe to expose client-side by design — it can
 // only create charges against your account, never read secret data.
@@ -120,15 +129,21 @@ function PaymentPanel({ billingBatchId }: { billingBatchId: string }) {
 
 export function BillingPage() {
   const [propertyId, setPropertyId] = useState('');
+  const [properties, setProperties] = useState<{ id: string; name: string }[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [result, setResult] = useState<string | null>(null);
   const [createdBatchId, setCreatedBatchId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [failures, setFailures] = useState<SyncFailure[]>([]);
+  const [qboSyncing, setQboSyncing] = useState(false);
+  const [qboResult, setQboResult] = useState<string | null>(null);
+  const [batches, setBatches] = useState<BillingBatch[]>([]);
 
   useEffect(() => {
     api.get<SyncFailure[]>('/qbo/sync-failures').then(setFailures).catch(() => {});
+    api.get<BillingBatch[]>('/billing/batches').then(setBatches).catch(() => {});
+    api.get<{ id: string; name: string }[]>('/units/properties').then(setProperties).catch(() => {});
   }, []);
 
   async function handleCreateBatch(e: FormEvent) {
@@ -143,6 +158,7 @@ export function BillingPage() {
       );
       setResult(`Created batch ${res.billingBatchId} with ${res.workOrdersBatched} work order(s).`);
       setCreatedBatchId(res.billingBatchId);
+      api.get<BillingBatch[]>('/billing/batches').then(setBatches).catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create statement');
     }
@@ -154,6 +170,19 @@ export function BillingPage() {
       setFailures((prev) => prev.filter((f) => f.id !== failureId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Retry failed');
+    }
+  }
+
+  async function syncToQuickBooks(batchId: string) {
+    setQboSyncing(true);
+    setQboResult(null);
+    try {
+      const res = await api.post<{ success: boolean; qboInvoiceId: string; alreadySynced?: boolean }>(`/qbo/batches/${batchId}/sync`);
+      setQboResult(res.alreadySynced ? `Already synced (Invoice ${res.qboInvoiceId})` : `Synced to QuickBooks (Invoice ${res.qboInvoiceId})`);
+    } catch (err) {
+      setQboResult(err instanceof Error ? `QuickBooks sync failed: ${err.message}` : 'QuickBooks sync failed');
+    } finally {
+      setQboSyncing(false);
     }
   }
 
@@ -171,14 +200,18 @@ export function BillingPage() {
         className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 space-y-4 mb-8"
       >
         <div>
-          <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Property ID</label>
-          <input
+          <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Property</label>
+          <select
             required
             value={propertyId}
             onChange={(e) => setPropertyId(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm font-mono"
-            placeholder="uuid"
-          />
+            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm"
+          >
+            <option value="">Select a property…</option>
+            {properties.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -223,6 +256,41 @@ export function BillingPage() {
         </button>
       </form>
 
+      {batches.length > 0 && (
+        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 mb-8">
+          <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
+            Existing Statements
+          </h2>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
+                <th className="pb-2 font-medium">Property</th>
+                <th className="pb-2 font-medium">Period</th>
+                <th className="pb-2 font-medium">Status</th>
+                <th className="pb-2 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {batches.map((b) => (
+                <tr key={b.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+                  <td className="py-2.5">{b.property_name}</td>
+                  <td className="py-2.5 text-xs">{b.billing_period_start} to {b.billing_period_end}</td>
+                  <td className="py-2.5 text-xs">{b.qbo_invoice_id ? "Synced to QBO" : b.batch_status}</td>
+                  <td className="py-2.5">
+                    <button
+                      onClick={() => setCreatedBatchId(b.id)}
+                      className="text-xs font-medium text-[var(--color-primary)] hover:underline"
+                    >
+                      Open
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {createdBatchId && (
         <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 mb-8">
           <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-1">
@@ -232,6 +300,19 @@ export function BillingPage() {
             Batch {createdBatchId.slice(0, 8)} — corporate AP payment for this statement.
           </p>
           <PaymentPanel billingBatchId={createdBatchId} />
+
+          <button
+            onClick={() => syncToQuickBooks(createdBatchId)}
+            disabled={qboSyncing}
+            className="mt-4 text-sm font-medium text-[var(--color-primary)] hover:underline disabled:opacity-60"
+          >
+            {qboSyncing ? "Syncing to QuickBooks…" : "Sync to QuickBooks"}
+          </button>
+          {qboResult && (
+            <div className="text-sm text-[var(--color-ink-soft)] bg-[var(--color-panel)] border border-[var(--color-concrete-light)] rounded-md px-3 py-2 mt-2">
+              {qboResult}
+            </div>
+          )}
         </div>
       )}
 

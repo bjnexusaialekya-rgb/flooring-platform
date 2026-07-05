@@ -11,6 +11,20 @@ const { getValidAccessToken } = require('./qboTokenManager');
  * precaution checklist's dead-letter requirement.
  */
 async function syncBatchToQuickBooks(batchId) {
+  // Idempotency guard: never push a second invoice for a batch that
+  // already has one. Without this, clicking Sync twice (double-click,
+  // retry, re-opened tab) would double-bill the client in QuickBooks.
+  const existing = await pool.query(
+    `SELECT qbo_invoice_id FROM billing_batches WHERE id = $1`,
+    [batchId]
+  );
+  if (existing.rows.length === 0) {
+    throw new Error(`Billing batch ${batchId} not found`);
+  }
+  if (existing.rows[0].qbo_invoice_id) {
+    return { success: true, qboInvoiceId: existing.rows[0].qbo_invoice_id, alreadySynced: true };
+  }
+
   const compiled = await pool.query(
     `SELECT
         c.corporate_name,

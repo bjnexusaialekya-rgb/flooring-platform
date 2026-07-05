@@ -1,9 +1,26 @@
 const express = require('express');
 const { pool } = require('../db/pool');
 const { requireAuth } = require('../middleware/auth');
+const { requireRole } = require('../middleware/role');
 
 const router = express.Router();
 router.use(requireAuth);
+
+/**
+ * GET /units/properties
+ * Simple id+name list for populating dropdowns (e.g. the Billing page
+ * property selector), instead of admin needing to know a raw UUID.
+ */
+router.get('/properties', requireRole('staff', 'admin'), async (req, res) => {
+  try {
+    const { pool } = require('../db/pool');
+    const result = await pool.query('SELECT id, name FROM properties ORDER BY name');
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('List properties error:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 /**
  * GET /units

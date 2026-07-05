@@ -16,6 +16,7 @@ const floorPlanTemplateRoutes = require('./routes/floorPlanTemplateRoutes');
 const projectTrackerRoutes = require('./routes/projectTrackerRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const userLookupRoutes = require('./routes/userLookupRoutes');
+const clientBillingRoutes = require('./routes/clientBillingRoutes');
 
 const app = express();
 
@@ -54,6 +55,20 @@ app.use('/', stripeWebhookRouter);
 // webhook route above.
 app.use(express.json());
 
+// Trim whitespace on all string body fields — catches accidental
+// leading/trailing spaces from copy-paste (e.g. a UUID with a
+// leading space failing validation further down the stack).
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object') {
+    for (const key of Object.keys(req.body)) {
+      if (typeof req.body[key] === 'string') {
+        req.body[key] = req.body[key].trim();
+      }
+    }
+  }
+  next();
+});
+
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
 app.use('/auth', authRoutes);
@@ -67,6 +82,7 @@ app.use('/floor-plan-templates', floorPlanTemplateRoutes);
 app.use('/project-trackers', projectTrackerRoutes);
 app.use('/reports', reportRoutes);
 app.use('/users', userLookupRoutes);
+app.use('/client-billing', clientBillingRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });

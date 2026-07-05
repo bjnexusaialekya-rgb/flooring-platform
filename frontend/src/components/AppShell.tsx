@@ -8,6 +8,7 @@ import {
   FolderKanban,
   LogOut,
   UploadCloud,
+  UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,6 +16,7 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof Clip
   client: [
     { to: '/work-orders', label: 'Work Orders', icon: ClipboardList },
     { to: '/work-orders/new', label: 'Submit New Order', icon: PlusCircle },
+    { to: '/my-billing', label: 'Billing', icon: Receipt },
   ],
   staff: [
     { to: '/work-orders', label: 'Work Order Queue', icon: ClipboardList },
@@ -29,6 +31,7 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof Clip
     { to: '/inventory', label: 'Inventory', icon: Boxes },
     { to: '/billing', label: 'Billing', icon: Receipt },
     { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
+    { to: '/add-client', label: 'Add Client', icon: UserPlus },
   ],
 };
 

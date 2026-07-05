@@ -181,7 +181,7 @@ router.get('/:id/staff-view', requireRole('staff', 'admin'), async (req, res) =>
   try {
     const result = await pool.query(
       `SELECT
-          wo.id, wo.status, wo.po_number, wo.target_turn_date, wo.created_at, wo.assigned_to,
+          wo.id, wo.status, wo.po_number, wo.target_turn_date, wo.created_at, wo.assigned_to, wo.scheduled_date,
           COALESCE(
             json_agg(
               json_build_object(
@@ -305,11 +305,11 @@ router.patch('/:id/status', requireRole('staff', 'admin'), async (req, res) => {
  * where the job is in the pipeline (e.g. reassigning a scheduled job).
  */
 router.patch('/:id/assign', requireRole('staff', 'admin'), async (req, res) => {
-  const { assignedTo } = req.body;
+  const { assignedTo, scheduledDate } = req.body;
   try {
     const result = await pool.query(
-      `UPDATE work_orders SET assigned_to = $1 WHERE id = $2 RETURNING id, assigned_to`,
-      [assignedTo || null, req.params.id]
+      `UPDATE work_orders SET assigned_to = $1, scheduled_date = $2 WHERE id = $3 RETURNING id, assigned_to, scheduled_date`,
+      [assignedTo || null, scheduledDate || null, req.params.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Work order not found' });
