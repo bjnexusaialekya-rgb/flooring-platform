@@ -32,7 +32,7 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof Clip
     { to: '/inventory', label: 'Inventory', icon: Boxes },
     { to: '/billing', label: 'Billing', icon: Receipt },
     { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
-    { to: '/add-client', label: 'Add Client', icon: UserPlus },
+    { to: '/add-client', label: 'Add Login', icon: UserPlus },
     { to: '/add-company', label: 'Add Company', icon: Building2 },
   ],
 };
