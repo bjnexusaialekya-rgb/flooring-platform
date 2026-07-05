@@ -6,32 +6,17 @@ const { exchangeAuthCode } = require('../services/qboTokenManager');
 const { syncBatchToQuickBooks } = require('../services/qboSyncWorker');
 
 const router = express.Router();
-router.use(requireAuth, requireRole('admin')); // QBO connection is an admin-only concern
-
-/**
- * GET /qbo/connect-url
- * Returns the Intuit OAuth consent URL for the admin to open. Kept
- * as a GET-and-redirect-yourself rather than a server-side redirect
- * so this works cleanly whether it's called from a script or the
- * future admin UI.
- */
-router.get('/connect-url', (req, res) => {
-  const redirectUri = process.env.QBO_REDIRECT_URI || 'http://localhost:4000/qbo/callback';
-  const params = new URLSearchParams({
-    client_id: process.env.QBO_CLIENT_ID,
-    response_type: 'code',
-    scope: 'com.intuit.quickbooks.accounting',
-    redirect_uri: redirectUri,
-    state: 'flooring-platform-connect',
-  });
-  return res.status(200).json({
-    url: `https://appcenter.intuit.com/connect/oauth2?${params.toString()}`,
-  });
-});
 
 /**
  * GET /qbo/callback
- * Intuit redirects here after the admin approves the connection.
+ * Intuit redirects the ADMIN'S BROWSER here after they approve the
+ * connection — this is a plain browser navigation, not an API call
+ * from our own frontend, so it never carries our app's JWT. This
+ * route is deliberately placed BEFORE requireAuth below and must
+ * stay public for that reason. It's still safe: Intuit itself
+ * validates that only the admin who started the flow can complete
+ * it, and this route only accepts a code+realmId pair that's
+ * useless without our own client secret to exchange it.
  */
 router.get('/callback', async (req, res) => {
   const { code, realmId } = req.query;
@@ -46,6 +31,27 @@ router.get('/callback', async (req, res) => {
     console.error('QBO OAuth callback error:', err.response?.data || err.message);
     return res.status(500).json({ error: 'Failed to complete QuickBooks connection' });
   }
+});
+
+// Everything below this line remains admin-only.
+router.use(requireAuth, requireRole('admin'));
+
+/**
+ * GET /qbo/connect-url
+ * Returns the Intuit OAuth consent URL for the admin to open.
+ */
+router.get('/connect-url', (req, res) => {
+  const redirectUri = process.env.QBO_REDIRECT_URI || 'http://localhost:4000/qbo/callback';
+  const params = new URLSearchParams({
+    client_id: process.env.QBO_CLIENT_ID,
+    response_type: 'code',
+    scope: 'com.intuit.quickbooks.accounting',
+    redirect_uri: redirectUri,
+    state: 'flooring-platform-connect',
+  });
+  return res.status(200).json({
+    url: `https://appcenter.intuit.com/connect/oauth2?${params.toString()}`,
+  });
 });
 
 /**
