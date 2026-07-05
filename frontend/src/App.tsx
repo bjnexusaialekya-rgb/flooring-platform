@@ -12,6 +12,7 @@ import { ProjectTrackerPage } from './pages/ProjectTrackerPage';
 import { TemplateImportPage } from './pages/TemplateImportPage';
 import { ClientBillingPage } from './pages/ClientBillingPage';
 import { AddClientPage } from './pages/AddClientPage';
+import { AddCompanyPage } from './pages/AddCompanyPage';
 
 function ProtectedRoutes({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -87,6 +88,14 @@ export default function App() {
               element={
                 <RoleGuard roles={['admin']}>
                   <AddClientPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/add-company"
+              element={
+                <RoleGuard roles={['admin']}>
+                  <AddCompanyPage />
                 </RoleGuard>
               }
             />
