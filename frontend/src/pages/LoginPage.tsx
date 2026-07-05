@@ -29,7 +29,7 @@ export function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="font-[var(--font-display)] text-2xl font-semibold text-white">
-            Oakridge<span className="text-[var(--color-amber)]">.</span>
+            Trestle<span className="text-[var(--color-amber)]">.</span>
           </div>
           <div className="text-white/50 text-sm mt-1">B2B work order platform</div>
         </div>

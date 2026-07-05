@@ -48,7 +48,7 @@ export function AppShell() {
       <aside className="w-60 flex-shrink-0 bg-[var(--color-ink)] text-white flex flex-col">
         <div className="px-5 py-6 border-b border-white/10">
           <div className="font-[var(--font-display)] font-semibold text-lg leading-tight">
-            Oakridge<span className="text-[var(--color-amber)]">.</span>
+            Trestle<span className="text-[var(--color-amber)]">.</span>
           </div>
           <div className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">
             {user.role} portal
