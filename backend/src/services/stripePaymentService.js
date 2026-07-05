@@ -24,6 +24,7 @@ async function createStripePaymentIntent(billingBatchId) {
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: Math.round(totalAmount * 100), // Stripe expects cents
+    payment_method_types: ['card'],
     currency: 'usd',
     metadata: { billingBatchId },
   });
