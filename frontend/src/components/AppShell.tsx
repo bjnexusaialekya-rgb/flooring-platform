@@ -10,6 +10,7 @@ import {
   UploadCloud,
   UserPlus,
   Building2,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -34,6 +35,7 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof Clip
     { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
     { to: '/add-client', label: 'Add Login', icon: UserPlus },
     { to: '/add-company', label: 'Add Company', icon: Building2 },
+    { to: '/admin-payments', label: 'Payments', icon: CreditCard },
   ],
 };
 
