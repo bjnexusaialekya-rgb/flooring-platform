@@ -53,9 +53,9 @@ router.get('/', async (req, res) => {
  * pricing-blind rather than just UI-hidden.
  */
 router.post('/', requireRole('client', 'staff', 'admin'), async (req, res) => {
-  const { unitId, floorPlanTemplateId, poNumber, targetTurnDate, billingContact } = req.body;
-  if (!unitId || !floorPlanTemplateId) {
-    return res.status(400).json({ error: 'unitId and floorPlanTemplateId are required' });
+  const { buildingIdentifier, unitNumber, floorPlanTemplateId, poNumber, targetTurnDate, billingContact } = req.body;
+  if (!buildingIdentifier || !unitNumber || !floorPlanTemplateId) {
+    return res.status(400).json({ error: 'buildingIdentifier, unitNumber, and floorPlanTemplateId are required' });
   }
 
   const client = await pool.connect();
@@ -63,7 +63,7 @@ router.post('/', requireRole('client', 'staff', 'admin'), async (req, res) => {
     await client.query('BEGIN');
 
     const templateRes = await client.query(
-      `SELECT ft.room_manifest, p.client_id
+      `SELECT ft.room_manifest, p.id AS property_id, p.client_id
        FROM floor_plan_templates ft
        JOIN properties p ON p.id = ft.property_id
        WHERE ft.id = $1`,
@@ -73,13 +73,41 @@ router.post('/', requireRole('client', 'staff', 'admin'), async (req, res) => {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Floor plan template not found' });
     }
-    const { room_manifest, client_id } = templateRes.rows[0];
+    const { room_manifest, property_id, client_id } = templateRes.rows[0];
 
     // A client user may only submit against their own client_id's templates.
     if (req.user.role === 'client' && req.user.clientId !== client_id) {
       await client.query('ROLLBACK');
       return res.status(403).json({ error: 'Template does not belong to your organization' });
     }
+
+    // Find-or-create the building and unit — property managers type these
+    // directly on the work order form rather than pre-registering every
+    // unit ahead of time. This matches the direct industry precedent
+    // (QFloors QOrders: property managers "select any part of the
+    // apartment for the order" without a separate unit-setup step), and
+    // reuses the same find-or-create pattern already proven for QBO
+    // Customer/Item auto-provisioning. ON CONFLICT DO UPDATE is a no-op
+    // write that safely returns the existing row's id either way.
+    const buildingRes = await client.query(
+      `INSERT INTO buildings (property_id, building_identifier)
+       VALUES ($1, $2)
+       ON CONFLICT (property_id, building_identifier)
+       DO UPDATE SET building_identifier = EXCLUDED.building_identifier
+       RETURNING id`,
+      [property_id, buildingIdentifier.trim()]
+    );
+    const buildingId = buildingRes.rows[0].id;
+
+    const unitRes = await client.query(
+      `INSERT INTO units (building_id, unit_number)
+       VALUES ($1, $2)
+       ON CONFLICT (building_id, unit_number)
+       DO UPDATE SET unit_number = EXCLUDED.unit_number
+       RETURNING id`,
+      [buildingId, unitNumber.trim()]
+    );
+    const unitId = unitRes.rows[0].id;
 
     const woRes = await client.query(
       `INSERT INTO work_orders (unit_id, floor_plan_template_id, submitted_by, po_number, target_turn_date, billing_contact, status)

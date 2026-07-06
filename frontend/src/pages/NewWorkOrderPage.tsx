@@ -3,15 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { FloorPlanDiagram } from '../components/FloorPlanDiagram';
 
-type Unit = { id: string; unit_number: string; building_identifier: string };
 type RoomSpec = { material_sku: string; net_qty: number; waste_pct: number };
 type Template = { id: string; plan_name: string; room_manifest: Record<string, RoomSpec> };
 
 export function NewWorkOrderPage() {
   const navigate = useNavigate();
-  const [units, setUnits] = useState<Unit[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [unitId, setUnitId] = useState('');
+  const [buildingIdentifier, setBuildingIdentifier] = useState('');
+  const [unitNumber, setUnitNumber] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [poNumber, setPoNumber] = useState('');
   const [targetTurnDate, setTargetTurnDate] = useState('');
@@ -19,7 +18,6 @@ export function NewWorkOrderPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    api.get<Unit[]>('/units').then(setUnits).catch(() => {});
     api.get<Template[]>('/floor-plan-templates').then(setTemplates).catch(() => {});
   }, []);
 
@@ -29,7 +27,8 @@ export function NewWorkOrderPage() {
     setSubmitting(true);
     try {
       const res = await api.post<{ workOrderId: string }>('/work-orders', {
-        unitId,
+        buildingIdentifier,
+        unitNumber,
         floorPlanTemplateId: templateId,
         poNumber: poNumber || undefined,
         targetTurnDate: targetTurnDate || undefined,
@@ -48,26 +47,32 @@ export function NewWorkOrderPage() {
         Submit Work Order
       </h1>
       <p className="text-sm text-[var(--color-concrete)] mb-6">
-        Select a unit and floor plan template. Materials and quantities are
-        set automatically — pricing is handled internally after submission.
+        Enter the building and unit, and select a floor plan template. Materials and
+        quantities are set automatically — pricing is handled internally after submission.
       </p>
 
       <form onSubmit={handleSubmit} className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Unit</label>
-          <select
-            required
-            value={unitId}
-            onChange={(e) => setUnitId(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm bg-white"
-          >
-            <option value="">Select a unit…</option>
-            {units.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.building_identifier} — Unit {u.unit_number}
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Building</label>
+            <input
+              required
+              value={buildingIdentifier}
+              onChange={(e) => setBuildingIdentifier(e.target.value)}
+              placeholder="e.g. Building A"
+              className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Unit Number</label>
+            <input
+              required
+              value={unitNumber}
+              onChange={(e) => setUnitNumber(e.target.value)}
+              placeholder="e.g. 205"
+              className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm"
+            />
+          </div>
         </div>
 
         <div>
