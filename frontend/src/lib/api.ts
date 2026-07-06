@@ -1,6 +1,17 @@
 const BASE_URL = '/api';
 
-type ApiError = { error: string; detail?: string };
+type ApiError = { error: string; detail?: string; [key: string]: unknown };
+
+export class ApiRequestError extends Error {
+  status: number;
+  body: ApiError;
+  constructor(status: number, body: ApiError) {
+    super(body.error || `Request failed with status ${status}`);
+    this.name = 'ApiRequestError';
+    this.status = status;
+    this.body = body;
+  }
+}
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('flooring_jwt');
@@ -14,7 +25,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     const body = (await res.json().catch(() => ({ error: res.statusText }))) as ApiError;
-    throw new Error(body.error || `Request failed with status ${res.status}`);
+    throw new ApiRequestError(res.status, body);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;

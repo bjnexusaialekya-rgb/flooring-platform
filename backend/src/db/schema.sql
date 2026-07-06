@@ -172,6 +172,7 @@ CREATE TABLE inventory_adjustments (
     material_id UUID REFERENCES materials_catalog(id) NOT NULL,
     delta NUMERIC(10,2) NOT NULL,
     reason TEXT,
+    work_order_id UUID REFERENCES work_orders(id),
     adjusted_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

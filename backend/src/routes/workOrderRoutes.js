@@ -300,29 +300,104 @@ const VALID_TRANSITIONS = {
 };
 
 router.patch('/:id/status', requireRole('staff', 'admin'), async (req, res) => {
-  const { status: newStatus } = req.body;
+  const { status: newStatus, forceOverride } = req.body;
+  const client = await pool.connect();
   try {
-    const current = await pool.query(`SELECT status FROM work_orders WHERE id = $1`, [req.params.id]);
+    await client.query('BEGIN');
+
+    const current = await client.query(`SELECT status FROM work_orders WHERE id = $1`, [req.params.id]);
     if (current.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Work order not found' });
     }
     const currentStatus = current.rows[0].status;
     const allowedNext = VALID_TRANSITIONS[currentStatus] || [];
     if (!allowedNext.includes(newStatus)) {
+      await client.query('ROLLBACK');
       return res.status(400).json({
         error: `Cannot transition from '${currentStatus}' to '${newStatus}'`,
         allowedNext,
       });
     }
 
-    const updated = await pool.query(
+    // Completing a work order deducts real stock (matches how contractor-
+    // facing inventory tools like inFlow tie job completion to inventory,
+    // rather than leaving inventory as a disconnected system). Unlike
+    // inFlow's hard block, we ask-then-proceed: a flooring crew has
+    // usually already physically finished the job in the field, so a
+    // stock mismatch is almost always a bookkeeping gap, not a reason to
+    // refuse to record a real, completed job.
+    let shortages = [];
+    if (newStatus === 'completed') {
+      const lineItemsRes = await client.query(
+        `SELECT woli.material_id, mc.sku, mc.name,
+                SUM(COALESCE(woli.quantity_actual_used, woli.quantity_calculated)) AS required_qty
+         FROM work_order_line_items woli
+         JOIN materials_catalog mc ON mc.id = woli.material_id
+         WHERE woli.work_order_id = $1
+         GROUP BY woli.material_id, mc.sku, mc.name`,
+        [req.params.id]
+      );
+
+      for (const row of lineItemsRes.rows) {
+        const stockRes = await client.query(
+          `SELECT quantity_on_hand FROM inventory_stock WHERE material_id = $1`,
+          [row.material_id]
+        );
+        const onHand = Number(stockRes.rows[0]?.quantity_on_hand ?? 0);
+        const required = Number(row.required_qty);
+        if (onHand - required < 0) {
+          shortages.push({ materialId: row.material_id, sku: row.sku, name: row.name, onHand, required, shortBy: required - onHand });
+        }
+      }
+
+      if (shortages.length > 0 && !forceOverride) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          error: 'Completing this work order would drive stock negative for one or more materials',
+          shortages,
+        });
+      }
+
+      // Apply the deduction — upsert so a material with no prior
+      // inventory_stock row still gets one, same pattern as the manual
+      // /adjust endpoint.
+      for (const row of lineItemsRes.rows) {
+        const required = Number(row.required_qty);
+        await client.query(
+          `INSERT INTO inventory_stock (material_id, quantity_on_hand)
+           VALUES ($1, $2 * -1)
+           ON CONFLICT (material_id)
+           DO UPDATE SET quantity_on_hand = inventory_stock.quantity_on_hand - $2`,
+          [row.material_id, required]
+        );
+        await client.query(
+          `INSERT INTO inventory_adjustments (material_id, delta, reason, work_order_id, adjusted_by)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [
+            row.material_id,
+            -required,
+            shortages.length > 0 ? 'work_order_completion_forced_negative' : 'work_order_completion',
+            req.params.id,
+            req.user.userId,
+          ]
+        );
+      }
+    }
+
+    const updated = await client.query(
       `UPDATE work_orders SET status = $1 WHERE id = $2 RETURNING id, status`,
       [newStatus, req.params.id]
     );
-    return res.status(200).json(updated.rows[0]);
+
+    await client.query('COMMIT');
+    return res.status(200).json({ ...updated.rows[0], stockShortages: shortages });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Status transition error:', err.message);
     return res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
   }
 });
 

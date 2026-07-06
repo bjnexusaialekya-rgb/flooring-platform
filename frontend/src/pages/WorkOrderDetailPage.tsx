@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api, type WorkOrderPortalView } from '../lib/api';
+import { api, ApiRequestError, type WorkOrderPortalView } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { StatusPipeline } from '../components/StatusPipeline';
+
+type StockShortage = {
+  materialId: string;
+  sku: string;
+  name: string;
+  onHand: number;
+  required: number;
+  shortBy: number;
+};
+
 
 type StaffLineItem = {
   id: string;
@@ -35,6 +45,7 @@ export function WorkOrderDetailPage() {
   const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
   const [advancing, setAdvancing] = useState(false);
+  const [stockShortages, setStockShortages] = useState<StockShortage[] | null>(null);
 
   const isStaff = user?.role === 'staff' || user?.role === 'admin';
 
@@ -93,18 +104,25 @@ export function WorkOrderDetailPage() {
     }
   }
 
-  async function advanceStatus() {
+  async function advanceStatus(forceOverride = false) {
     if (!id || !order) return;
     const nextStatus = NEXT_STATUS[order.status];
     if (!nextStatus) return;
     setAdvancing(true);
+    setError(null);
     try {
       const updated = await api.patch<{ id: string; status: string }>(`/work-orders/${id}/status`, {
         status: nextStatus,
+        ...(forceOverride ? { forceOverride: true } : {}),
       });
       setOrder((prev) => (prev ? { ...prev, status: updated.status } : prev));
+      setStockShortages(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to advance status');
+      if (err instanceof ApiRequestError && err.status === 409 && Array.isArray(err.body.stockShortages)) {
+        setStockShortages(err.body.stockShortages as StockShortage[]);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to advance status');
+      }
     } finally {
       setAdvancing(false);
     }
@@ -162,7 +180,7 @@ export function WorkOrderDetailPage() {
           )}
           {isStaff && NEXT_STATUS[order.status] && (
             <button
-              onClick={advanceStatus}
+              onClick={() => advanceStatus(false)}
               disabled={advancing}
               className="bg-[var(--color-ink)] hover:bg-black text-white text-xs font-medium
                          rounded-md px-4 py-2 transition-colors disabled:opacity-60"
@@ -171,6 +189,36 @@ export function WorkOrderDetailPage() {
             </button>
           )}
         </div>
+        {stockShortages && stockShortages.length > 0 && (
+          <div className="mt-4 rounded-md border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-4">
+            <p className="text-sm font-medium text-[var(--color-danger)] mb-2">
+              Completing this work order would drive stock negative:
+            </p>
+            <ul className="text-xs text-[var(--color-ink)] mb-3 space-y-1">
+              {stockShortages.map((s) => (
+                <li key={s.materialId}>
+                  {s.name} ({s.sku}): on hand {s.onHand}, needs {s.required} — short by {s.shortBy}
+                </li>
+              ))}
+            </ul>
+            <div className="flex gap-2">
+              <button
+                onClick={() => advanceStatus(true)}
+                disabled={advancing}
+                className="bg-[var(--color-danger)] hover:opacity-90 text-white text-xs font-medium
+                           rounded-md px-3 py-1.5 transition-colors disabled:opacity-60"
+              >
+                {advancing ? 'Updating…' : 'Proceed anyway'}
+              </button>
+              <button
+                onClick={() => setStockShortages(null)}
+                className="text-xs font-medium text-[var(--color-concrete)] px-3 py-1.5"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ---- Client-visible section: quantities only, no price ---- */}
