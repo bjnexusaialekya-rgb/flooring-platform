@@ -18,6 +18,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const userLookupRoutes = require('./routes/userLookupRoutes');
 const clientBillingRoutes = require('./routes/clientBillingRoutes');
 const adminSetupRoutes = require('./routes/adminSetupRoutes');
+const purchaseOrderRoutes = require('./routes/purchaseOrderRoutes');
 
 const app = express();
 
@@ -85,6 +86,7 @@ app.use('/reports', reportRoutes);
 app.use('/users', userLookupRoutes);
 app.use('/client-billing', clientBillingRoutes);
 app.use('/admin-setup', adminSetupRoutes);
+app.use('/purchase-orders', purchaseOrderRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
