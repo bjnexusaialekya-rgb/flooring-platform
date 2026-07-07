@@ -26,7 +26,7 @@ export function InventoryPage() {
         </div>
       )}
 
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden">
         {items === null && <TableSkeleton columns={6} rows={5} />}
 
         {items !== null && items.length === 0 && (

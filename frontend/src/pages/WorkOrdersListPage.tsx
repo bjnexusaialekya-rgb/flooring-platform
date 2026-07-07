@@ -4,6 +4,8 @@ import { ClipboardList, SearchX } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { EmptyState, TableSkeleton } from '../components/UIState';
+import { KebabMenu } from '../components/KebabMenu';
+import { FilterChip } from '../components/FilterChip';
 
 type WorkOrderSummary = {
   id: string;
@@ -91,25 +93,24 @@ export function WorkOrdersListPage() {
             onChange={(e) => setSearch(e.target.value)}
             className="px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm w-56"
           />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm bg-white"
-          >
-            <option value="all">All statuses</option>
+<div className="flex items-center gap-2 flex-wrap">
+            <FilterChip label="All statuses" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
             {Object.keys(STATUS_STYLES).map((s) => (
-              <option key={s} value={s}>
-                {s.replace(/_/g, ' ')}
-              </option>
+              <FilterChip
+                key={s}
+                label={s.replace(/_/g, ' ')}
+                active={statusFilter === s}
+                onClick={() => setStatusFilter(s)}
+              />
             ))}
-          </select>
+          </div>
           <span className="text-xs text-[var(--color-concrete)]">
             {filtered.length} of {orders.length}
           </span>
         </div>
       )}
 
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden">
         {orders === null && <TableSkeleton columns={4} rows={5} />}
 
         {orders !== null && orders.length === 0 && (
@@ -140,27 +141,33 @@ export function WorkOrdersListPage() {
                 <th className="px-5 py-3 font-medium">Target Turn Date</th>
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 font-medium">Submitted</th>
+                <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((wo) => (
                 <tr
                   key={wo.id}
-                  className="border-b last:border-0 border-[var(--color-concrete-light)] hover:bg-[var(--color-primary-soft)]/40 cursor-pointer"
+                  className="group border-b last:border-0 border-[var(--color-concrete-light)] hover:bg-[var(--color-primary-soft)]/40 cursor-pointer"
                 >
-                  <td className="px-5 py-3.5 font-mono text-xs">
+                  <td className="px-5 py-4 font-mono text-xs">
                     <Link to={`/work-orders/${wo.id}`} className="text-[var(--color-primary)] hover:underline">
                       {wo.po_number ?? wo.id.slice(0, 8)}
                     </Link>
                   </td>
-                  <td className="px-5 py-3.5 text-[var(--color-ink-soft)]">
+                  <td className="px-5 py-4 text-[var(--color-ink-soft)]">
                     {wo.target_turn_date ?? '—'}
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-5 py-4">
                     <StatusPill status={wo.status} />
                   </td>
-                  <td className="px-5 py-3.5 text-[var(--color-concrete)]">
+                  <td className="px-5 py-4 text-[var(--color-concrete)]">
                     {new Date(wo.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <KebabMenu actions={[
+                      { label: 'View detail', onClick: () => window.location.assign(`/work-orders/${wo.id}`) },
+                    ]} />
                   </td>
                 </tr>
               ))}

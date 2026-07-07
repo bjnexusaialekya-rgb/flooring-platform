@@ -114,7 +114,7 @@ npm run migrate
 node src/db/seed.js
 ```
 
-This prints an admin login (`admin@bjnexus.local` / `ChangeMe123!` —
+This prints an admin login (`admin@bjnexus.local` / `<SEED_ADMIN_PASSWORD value>` —
 change this password before this ever goes near production) and a
 `TEST_CLIENT_TOKEN` / `TEST_WORK_ORDER_ID` pair for the pricing test.
 

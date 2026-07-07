@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Package, FileSearch } from 'lucide-react';
 import { api, ApiRequestError, type PurchaseOrderListItem, type PurchaseOrderDetail, type InventoryItem } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
+import { KebabMenu } from '../components/KebabMenu';
+import { FilterChip } from '../components/FilterChip';
 
 const VALID_NEXT: Record<string, string[]> = {
   draft: ['submitted', 'cancelled'],
@@ -96,6 +98,7 @@ export function PurchaseOrdersPage() {
     }
   }
 
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'submitted' | 'received' | 'cancelled'>('all');
   const openOrders = orders?.filter((o) => o.status === 'draft' || o.status === 'submitted') ?? [];
   const openValue = openOrders.reduce((sum, o) => sum + Number(o.total_cost), 0);
 
@@ -120,7 +123,7 @@ export function PurchaseOrdersPage() {
         </div>
       )}
 
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 mb-6">
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6 mb-6">
         <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">New Purchase Order</h2>
         <div className="flex gap-2 items-end mb-4">
           <div>
@@ -196,8 +199,15 @@ export function PurchaseOrdersPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+        <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden">
           <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] px-6 pt-6 mb-4">All Purchase Orders</h2>
+
+          <div className="flex gap-2 px-6 mb-4">
+            <FilterChip label="All" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
+            <FilterChip label="Draft" active={statusFilter === 'draft'} onClick={() => setStatusFilter('draft')} />
+            <FilterChip label="Submitted" active={statusFilter === 'submitted'} onClick={() => setStatusFilter('submitted')} />
+            <FilterChip label="Received" active={statusFilter === 'received'} onClick={() => setStatusFilter('received')} />
+          </div>
 
           {orders === null && <TableSkeleton columns={4} rows={4} />}
 
@@ -216,20 +226,28 @@ export function PurchaseOrdersPage() {
                   <th className="pb-2 pl-6 font-medium">Status</th>
                   <th className="pb-2 font-medium">Lines</th>
                   <th className="pb-2 font-medium">Total</th>
-                  <th className="pb-2 pr-6 font-medium">Created</th>
+                  <th className="pb-2 font-medium">Created</th>
+                  <th className="pb-2 pr-6 font-medium"></th>
                 </tr>
               </thead>
               <tbody>
-                {orders.map((po) => (
+                {orders
+                  .filter((po) => statusFilter === 'all' || po.status === statusFilter)
+                  .map((po) => (
                   <tr
                     key={po.id}
                     onClick={() => openDetail(po.id)}
-                    className="border-b last:border-0 border-[var(--color-concrete-light)] cursor-pointer hover:bg-[var(--color-concrete-light)]/20"
+                    className="group border-b last:border-0 border-[var(--color-concrete-light)] cursor-pointer hover:bg-[var(--color-concrete-light)]/20"
                   >
-                    <td className="py-2.5 pl-6"><StatusBadge status={po.status} /></td>
-                    <td className="py-2.5 font-mono text-xs">{po.line_item_count}</td>
-                    <td className="py-2.5 font-mono text-xs">${Number(po.total_cost).toFixed(2)}</td>
-                    <td className="py-2.5 pr-6 text-xs text-[var(--color-concrete)]">{new Date(po.created_at).toLocaleDateString()}</td>
+                    <td className="py-4 pl-6"><StatusBadge status={po.status} /></td>
+                    <td className="py-4 font-mono text-xs">{po.line_item_count}</td>
+                    <td className="py-4 font-mono text-xs">${Number(po.total_cost).toFixed(2)}</td>
+                    <td className="py-4 text-xs text-[var(--color-concrete)]">{new Date(po.created_at).toLocaleDateString()}</td>
+                    <td className="py-4 pr-6 text-right">
+                      <KebabMenu actions={[
+                        { label: 'View detail', onClick: () => openDetail(po.id) },
+                      ]} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -237,7 +255,7 @@ export function PurchaseOrdersPage() {
           )}
         </div>
 
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
+        <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
           <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">Detail</h2>
           {!selected && (
             <EmptyState

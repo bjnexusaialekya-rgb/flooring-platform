@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { TrendingUp, Building2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, MetricCard } from '../components/UIState';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 type ReportSummary = {
   statusCounts: { status: string; count: number }[];
@@ -9,6 +10,9 @@ type ReportSummary = {
   topProperties: { name: string; work_order_count: number }[];
   pendingSyncFailures: number;
 };
+
+const CHART_COLORS = ['#6366f1', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#22c55e'];
+
 
 const STATUS_LABELS: Record<string, string> = {
   pending_review: 'Submitted',
@@ -25,7 +29,7 @@ function DashboardSkeleton() {
     <div className="animate-pulse">
       <div className="grid grid-cols-3 gap-4 mb-6">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] px-5 py-4">
+          <div key={i} className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] px-5 py-4">
             <div className="h-3 bg-[var(--color-concrete-light)] rounded w-24 mb-3" />
             <div className="h-6 bg-[var(--color-concrete-light)] rounded w-16" />
           </div>
@@ -33,7 +37,7 @@ function DashboardSkeleton() {
       </div>
       <div className="grid grid-cols-2 gap-4">
         {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
+          <div key={i} className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
             <div className="h-4 bg-[var(--color-concrete-light)] rounded w-40 mb-4" />
             {Array.from({ length: 4 }).map((_, j) => (
               <div key={j} className="flex items-center justify-between mb-2">
@@ -88,7 +92,7 @@ export function ReportsPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
+            <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
               <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
                 Work Orders by Stage
               </h2>
@@ -99,18 +103,27 @@ export function ReportsPage() {
                   description="Stage breakdown will appear once work orders start moving through the pipeline."
                 />
               ) : (
-                <div className="space-y-2">
-                  {data.statusCounts.map((s) => (
-                    <div key={s.status} className="flex items-center justify-between text-sm">
-                      <span className="text-[var(--color-ink-soft)]">{STATUS_LABELS[s.status] ?? s.status}</span>
-                      <span className="font-mono text-[var(--color-ink)]">{s.count}</span>
-                    </div>
-                  ))}
-                </div>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart
+                    data={data.statusCounts.map((s) => ({ name: STATUS_LABELS[s.status] ?? s.status, count: s.count }))}
+                    layout="vertical"
+                    margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
+                    <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={90} />
+                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                    <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                      {data.statusCounts.map((_, i) => (
+                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </div>
 
-            <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
+            <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
               <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
                 Top Properties by Volume
               </h2>
@@ -121,14 +134,19 @@ export function ReportsPage() {
                   description="Property volume rankings will show up here once work orders come in."
                 />
               ) : (
-                <div className="space-y-2">
-                  {data.topProperties.map((p) => (
-                    <div key={p.name} className="flex items-center justify-between text-sm">
-                      <span className="text-[var(--color-ink-soft)]">{p.name}</span>
-                      <span className="font-mono text-[var(--color-ink)]">{p.work_order_count}</span>
-                    </div>
-                  ))}
-                </div>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart
+                    data={data.topProperties.map((p) => ({ name: p.name, count: p.work_order_count }))}
+                    layout="vertical"
+                    margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
+                    <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={110} />
+                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                    <Bar dataKey="count" fill="#14b8a6" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </div>
           </div>

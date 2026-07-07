@@ -209,7 +209,7 @@ export function BillingPage() {
 
       <form
         onSubmit={handleCreateBatch}
-        className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 space-y-4 mb-8"
+        className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6 space-y-4 mb-8"
       >
         <div>
           <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Property</label>
@@ -268,7 +268,7 @@ export function BillingPage() {
         </button>
       </form>
 
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden mb-8">
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden mb-8">
         <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] px-6 pt-6 mb-4">
           Existing Statements
         </h2>
@@ -326,7 +326,7 @@ export function BillingPage() {
       </div>
 
       {createdBatchId && (
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 mb-8">
+        <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6 mb-8">
           <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-1">
             Collect Payment
           </h2>

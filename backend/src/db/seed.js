@@ -11,7 +11,7 @@ async function seed() {
     // --- Admin user (bootstrap — /auth/register requires an admin,
     // so the very first one has to be created directly) ---
     const adminEmail = 'admin@bjnexus.local';
-    const adminPasswordHash = await bcrypt.hash('ChangeMe123!', 12);
+    const adminPasswordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || 'ChangeMe123!', 12);
     const adminRes = await client.query(
       `INSERT INTO users (email, password_hash, role, display_name)
        VALUES ($1, $2, 'admin', 'Seed Admin')
@@ -19,7 +19,7 @@ async function seed() {
        RETURNING id`,
       [adminEmail, adminPasswordHash]
     );
-    console.log(`Admin created: ${adminEmail} / ChangeMe123!`);
+    console.log(`Admin created: ${adminEmail} (password set via SEED_ADMIN_PASSWORD env var)`);
 
     // --- Sample client + property + building + unit ---
     const clientRes = await client.query(
@@ -46,7 +46,7 @@ async function seed() {
     const unitId = unitRes.rows[0].id;
 
     // --- Client-role user, scoped to that client ---
-    const clientUserPasswordHash = await bcrypt.hash('ChangeMe123!', 12);
+    const clientUserPasswordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || 'ChangeMe123!', 12);
     const clientUserRes = await client.query(
       `INSERT INTO users (email, password_hash, role, client_id, display_name)
        VALUES ($1, $2, 'client', $3, 'Sample Building Manager')

@@ -53,7 +53,7 @@ export function MetricCard({ label, value, tone = 'default' }: { label: string; 
       ? 'text-[var(--color-success)]'
       : 'text-[var(--color-ink)]';
   return (
-    <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] px-5 py-4">
+    <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] px-5 py-4">
       <p className="text-xs uppercase tracking-wide text-[var(--color-concrete)] mb-1.5">{label}</p>
       <p className={`font-[var(--font-mono)] text-2xl font-semibold ${toneClass}`}>{value}</p>
     </div>

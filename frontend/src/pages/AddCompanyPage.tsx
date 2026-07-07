@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { api } from '../lib/api';
+import { Building2, MapPin } from 'lucide-react';
 
 type ClientOption = { id: string; corporate_name: string };
 
@@ -91,22 +92,29 @@ export function AddCompanyPage() {
     }
   }
 
-  const inputClass = 'w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm';
+  const inputClass = 'w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]';
   const labelClass = 'block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5';
 
   return (
     <div className="max-w-lg space-y-8">
       <div>
-        <h1 className="font-[var(--font-display)] text-2xl font-semibold text-[var(--color-ink)] mb-1">
-          Add Company
-        </h1>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-xs font-semibold">1</span>
+          <h1 className="font-[var(--font-display)] text-2xl font-semibold text-[var(--color-ink)]">
+            Add Company
+          </h1>
+        </div>
         <p className="text-sm text-[var(--color-concrete)] mb-6">
           Onboard a new corporate client before creating logins or properties for them.
         </p>
         <form
           onSubmit={handleCreateCompany}
-          className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 space-y-4"
+          className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6 space-y-4"
         >
+          <div className="flex items-center gap-2 pb-2 mb-2 border-b border-[var(--color-concrete-light)]">
+            <Building2 size={16} className="text-[var(--color-primary)]" />
+            <span className="text-sm font-medium text-[var(--color-ink)]">Company Details</span>
+          </div>
           <div>
             <label className={labelClass}>Company Name</label>
             <input
@@ -226,17 +234,24 @@ export function AddCompanyPage() {
       </div>
 
       <div>
-        <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--color-ink)] mb-1">
-          Add Property
-        </h2>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-xs font-semibold">2</span>
+          <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--color-ink)]">
+            Add Property
+          </h2>
+        </div>
         <p className="text-sm text-[var(--color-concrete)] mb-6">
           Add a property under an existing company. Required before floor-plan templates,
           buildings, or units can be created for it.
         </p>
         <form
           onSubmit={handleAddProperty}
-          className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 space-y-4"
+          className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6 space-y-4"
         >
+          <div className="flex items-center gap-2 pb-2 mb-2 border-b border-[var(--color-concrete-light)]">
+            <MapPin size={16} className="text-[var(--color-primary)]" />
+            <span className="text-sm font-medium text-[var(--color-ink)]">Property Location</span>
+          </div>
           <div>
             <label className={labelClass}>Company</label>
             <select

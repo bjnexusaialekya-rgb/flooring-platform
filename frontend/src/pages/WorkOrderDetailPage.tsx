@@ -41,11 +41,11 @@ function DetailSkeleton() {
         <div className="h-6 bg-[var(--color-concrete-light)] rounded w-56 mb-2" />
         <div className="h-3 bg-[var(--color-concrete-light)] rounded w-36" />
       </div>
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 mb-6">
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6 mb-6">
         <div className="h-3 bg-[var(--color-concrete-light)] rounded w-full mb-4" />
         <div className="h-8 bg-[var(--color-concrete-light)] rounded w-40" />
       </div>
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden">
         <TableSkeleton columns={3} rows={4} />
       </div>
     </div>
@@ -173,7 +173,7 @@ export function WorkOrderDetailPage() {
         </p>
       </div>
 
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 mb-6">
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6 mb-6">
         <StatusPipeline currentStatus={order.status} />
         <div className="flex items-center justify-between mt-2">
           {isStaff && (
@@ -244,7 +244,7 @@ export function WorkOrderDetailPage() {
       </div>
 
       {/* ---- Client-visible section: quantities only, no price ---- */}
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden">
         <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] px-6 pt-6 mb-4">
           Rooms &amp; Materials
         </h2>

@@ -109,7 +109,7 @@ export function ClientBillingPage() {
         </div>
       )}
 
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden">
         {statements === null && <TableSkeleton columns={5} rows={3} />}
 
         {statements !== null && statements.length === 0 && (
@@ -167,7 +167,7 @@ export function ClientBillingPage() {
       </div>
 
       {payingId && clientSecret && stripePromise && (
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 mt-6">
+        <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6 mt-6">
           <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-1">
             Complete Payment
           </h2>

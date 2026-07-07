@@ -130,7 +130,7 @@ export function AdminPaymentDashboardPage() {
         </div>
       )}
 
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
         {payments === null && <TableSkeleton columns={7} rows={5} />}
 
         {payments !== null && payments.length === 0 && (

@@ -66,7 +66,7 @@ export function TemplateImportPage() {
       </button>
 
       <div
-        className="bg-[var(--color-panel)] rounded-xl border-2 border-dashed border-[var(--color-concrete-light)] px-6 py-10 flex flex-col items-center text-center cursor-pointer hover:border-[var(--color-primary)] transition-colors"
+        className="bg-[var(--color-panel)] rounded-xl border surface-card-2 border-dashed border-[var(--color-concrete-light)] px-6 py-10 flex flex-col items-center text-center cursor-pointer hover:border-[var(--color-primary)] transition-colors"
         onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
@@ -111,7 +111,7 @@ export function TemplateImportPage() {
             {result.templatesProcessed === 1 ? '' : 's'}.
           </div>
 
-          <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+          <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-concrete-light)] text-left text-xs uppercase tracking-wide text-[var(--color-concrete)]">

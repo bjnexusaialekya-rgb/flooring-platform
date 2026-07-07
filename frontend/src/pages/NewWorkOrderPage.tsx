@@ -51,7 +51,7 @@ export function NewWorkOrderPage() {
         quantities are set automatically — pricing is handled internally after submission.
       </p>
 
-      <form onSubmit={handleSubmit} className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Building</label>
