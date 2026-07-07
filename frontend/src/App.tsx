@@ -6,6 +6,7 @@ import { WorkOrdersListPage } from './pages/WorkOrdersListPage';
 import { WorkOrderDetailPage } from './pages/WorkOrderDetailPage';
 import { NewWorkOrderPage } from './pages/NewWorkOrderPage';
 import { InventoryPage } from './pages/InventoryPage';
+import { PurchaseOrdersPage } from './pages/PurchaseOrdersPage';
 import { BillingPage } from './pages/BillingPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { ProjectTrackerPage } from './pages/ProjectTrackerPage';
@@ -65,6 +66,14 @@ export default function App() {
               element={
                 <RoleGuard roles={['staff', 'admin']}>
                   <InventoryPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/purchase-orders"
+              element={
+                <RoleGuard roles={['staff', 'admin']}>
+                  <PurchaseOrdersPage />
                 </RoleGuard>
               }
             />

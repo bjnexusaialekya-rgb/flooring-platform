@@ -82,3 +82,30 @@ export type TemplateImportResponse = {
   results: TemplateImportResultRow[];
   rowErrors: TemplateImportRowError[];
 };
+
+export type PurchaseOrderListItem = {
+  id: string;
+  status: string;
+  created_at: string;
+  created_by_name: string | null;
+  line_item_count: string;
+  total_cost: string;
+};
+
+export type PurchaseOrderLineItem = {
+  id: string;
+  material_id: string;
+  sku: string;
+  name: string;
+  quantity: string;
+  unit_cost: string;
+  line_total: string;
+};
+
+export type PurchaseOrderDetail = {
+  id: string;
+  status: string;
+  created_at: string;
+  created_by_name: string | null;
+  lineItems: PurchaseOrderLineItem[];
+};
