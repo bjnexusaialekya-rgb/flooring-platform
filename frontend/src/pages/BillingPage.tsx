@@ -1,7 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { FileText } from 'lucide-react';
 import { api } from '../lib/api';
+import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 
 type SyncFailure = { id: string; billing_batch_id: string; error_message: string; failed_at: string };
 type BillingBatch = {
@@ -14,10 +16,6 @@ type BillingBatch = {
   property_name: string;
 };
 
-// Publishable key is safe to expose client-side by design — it can
-// only create charges against your account, never read secret data.
-// Falls back to null if not configured, in which case the payment
-// panel below stays hidden rather than crashing.
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
   : null;
@@ -138,7 +136,7 @@ export function BillingPage() {
   const [failures, setFailures] = useState<SyncFailure[]>([]);
   const [qboSyncing, setQboSyncing] = useState(false);
   const [qboResult, setQboResult] = useState<string | null>(null);
-  const [batches, setBatches] = useState<BillingBatch[]>([]);
+  const [batches, setBatches] = useState<BillingBatch[] | null>(null);
 
   useEffect(() => {
     api.get<SyncFailure[]>('/qbo/sync-failures').then(setFailures).catch(() => {});
@@ -186,6 +184,8 @@ export function BillingPage() {
     }
   }
 
+  const syncedCount = batches?.filter((b) => b.qbo_invoice_id).length ?? 0;
+
   return (
     <div className="max-w-2xl">
       <h1 className="font-[var(--font-display)] text-2xl font-semibold text-[var(--color-ink)] mb-1">
@@ -194,6 +194,18 @@ export function BillingPage() {
       <p className="text-sm text-[var(--color-concrete)] mb-6">
         Batch completed work orders into a single consolidated statement per property.
       </p>
+
+      {batches !== null && batches.length > 0 && (
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <MetricCard label="Statements" value={String(batches.length)} />
+          <MetricCard label="Synced to QBO" value={String(syncedCount)} tone="success" />
+          <MetricCard
+            label="Sync Failures"
+            value={String(failures.length)}
+            tone={failures.length > 0 ? 'danger' : 'default'}
+          />
+        </div>
+      )}
 
       <form
         onSubmit={handleCreateBatch}
@@ -256,27 +268,49 @@ export function BillingPage() {
         </button>
       </form>
 
-      {batches.length > 0 && (
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 mb-8">
-          <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
-            Existing Statements
-          </h2>
+      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden mb-8">
+        <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] px-6 pt-6 mb-4">
+          Existing Statements
+        </h2>
+
+        {batches === null && <TableSkeleton columns={4} rows={3} />}
+
+        {batches !== null && batches.length === 0 && (
+          <EmptyState
+            icon={<FileText size={22} />}
+            title="No statements yet"
+            description="Create a consolidated statement above once work orders are ready to bill."
+          />
+        )}
+
+        {batches !== null && batches.length > 0 && (
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
-                <th className="pb-2 font-medium">Property</th>
+                <th className="pb-2 pl-6 font-medium">Property</th>
                 <th className="pb-2 font-medium">Period</th>
                 <th className="pb-2 font-medium">Status</th>
-                <th className="pb-2 font-medium"></th>
+                <th className="pb-2 pr-6 font-medium"></th>
               </tr>
             </thead>
             <tbody>
               {batches.map((b) => (
                 <tr key={b.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
-                  <td className="py-2.5">{b.property_name}</td>
+                  <td className="py-2.5 pl-6">{b.property_name}</td>
                   <td className="py-2.5 text-xs">{b.billing_period_start} to {b.billing_period_end}</td>
-                  <td className="py-2.5 text-xs">{b.qbo_invoice_id ? "Synced to QBO" : b.batch_status}</td>
                   <td className="py-2.5">
+                    <span
+                      className={[
+                        'inline-block px-2.5 py-1 rounded-full text-xs font-medium capitalize',
+                        b.qbo_invoice_id
+                          ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
+                          : 'bg-[var(--color-concrete-light)] text-[var(--color-concrete)]',
+                      ].join(' ')}
+                    >
+                      {b.qbo_invoice_id ? 'Synced to QBO' : b.batch_status}
+                    </span>
+                  </td>
+                  <td className="py-2.5 pr-6">
                     <button
                       onClick={() => setCreatedBatchId(b.id)}
                       className="text-xs font-medium text-[var(--color-primary)] hover:underline"
@@ -288,8 +322,8 @@ export function BillingPage() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
 
       {createdBatchId && (
         <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 mb-8">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, AlertCircle, Building2 } from 'lucide-react';
+import { TrendingUp, Building2 } from 'lucide-react';
 import { api } from '../lib/api';
+import { EmptyState, MetricCard } from '../components/UIState';
 
 type ReportSummary = {
   statusCounts: { status: string; count: number }[];
@@ -19,6 +20,34 @@ const STATUS_LABELS: Record<string, string> = {
   invoiced: 'Invoiced',
 };
 
+function DashboardSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] px-5 py-4">
+            <div className="h-3 bg-[var(--color-concrete-light)] rounded w-24 mb-3" />
+            <div className="h-6 bg-[var(--color-concrete-light)] rounded w-16" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
+            <div className="h-4 bg-[var(--color-concrete-light)] rounded w-40 mb-4" />
+            {Array.from({ length: 4 }).map((_, j) => (
+              <div key={j} className="flex items-center justify-between mb-2">
+                <div className="h-3 bg-[var(--color-concrete-light)] rounded w-28" />
+                <div className="h-3 bg-[var(--color-concrete-light)] rounded w-8" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ReportsPage() {
   const [data, setData] = useState<ReportSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,9 +63,6 @@ export function ReportsPage() {
       </div>
     );
   }
-  if (!data) {
-    return <div className="text-sm text-[var(--color-concrete)]">Loading…</div>;
-  }
 
   return (
     <div>
@@ -47,73 +73,67 @@ export function ReportsPage() {
         Operational snapshot across all active properties.
       </p>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-5">
-          <div className="flex items-center gap-2 text-[var(--color-primary)] mb-2">
-            <TrendingUp size={16} />
-            <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-concrete)]">
-              Revenue this month
-            </span>
-          </div>
-          <div className="font-[var(--font-mono)] text-2xl font-semibold text-[var(--color-ink)]">
-            ${data.revenueThisMonth.toFixed(2)}
-          </div>
-        </div>
+      {data === null && <DashboardSkeleton />}
 
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-5">
-          <div className="flex items-center gap-2 text-[var(--color-amber-dark)] mb-2">
-            <AlertCircle size={16} />
-            <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-concrete)]">
-              QBO sync failures
-            </span>
+      {data !== null && (
+        <>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <MetricCard label="Revenue this month" value={`$${data.revenueThisMonth.toFixed(2)}`} />
+            <MetricCard
+              label="QBO sync failures"
+              value={String(data.pendingSyncFailures)}
+              tone={data.pendingSyncFailures > 0 ? 'danger' : 'success'}
+            />
+            <MetricCard label="Active properties" value={String(data.topProperties.length)} tone="success" />
           </div>
-          <div className="font-[var(--font-mono)] text-2xl font-semibold text-[var(--color-ink)]">
-            {data.pendingSyncFailures}
-          </div>
-        </div>
 
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-5">
-          <div className="flex items-center gap-2 text-[var(--color-success)] mb-2">
-            <Building2 size={16} />
-            <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-concrete)]">
-              Active properties
-            </span>
-          </div>
-          <div className="font-[var(--font-mono)] text-2xl font-semibold text-[var(--color-ink)]">
-            {data.topProperties.length}
-          </div>
-        </div>
-      </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
+              <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
+                Work Orders by Stage
+              </h2>
+              {data.statusCounts.length === 0 ? (
+                <EmptyState
+                  icon={<TrendingUp size={22} />}
+                  title="No work orders yet"
+                  description="Stage breakdown will appear once work orders start moving through the pipeline."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {data.statusCounts.map((s) => (
+                    <div key={s.status} className="flex items-center justify-between text-sm">
+                      <span className="text-[var(--color-ink-soft)]">{STATUS_LABELS[s.status] ?? s.status}</span>
+                      <span className="font-mono text-[var(--color-ink)]">{s.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
-          <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
-            Work Orders by Stage
-          </h2>
-          <div className="space-y-2">
-            {data.statusCounts.map((s) => (
-              <div key={s.status} className="flex items-center justify-between text-sm">
-                <span className="text-[var(--color-ink-soft)]">{STATUS_LABELS[s.status] ?? s.status}</span>
-                <span className="font-mono text-[var(--color-ink)]">{s.count}</span>
-              </div>
-            ))}
+            <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
+              <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
+                Top Properties by Volume
+              </h2>
+              {data.topProperties.length === 0 ? (
+                <EmptyState
+                  icon={<Building2 size={22} />}
+                  title="No properties yet"
+                  description="Property volume rankings will show up here once work orders come in."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {data.topProperties.map((p) => (
+                    <div key={p.name} className="flex items-center justify-between text-sm">
+                      <span className="text-[var(--color-ink-soft)]">{p.name}</span>
+                      <span className="font-mono text-[var(--color-ink)]">{p.work_order_count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
-          <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
-            Top Properties by Volume
-          </h2>
-          <div className="space-y-2">
-            {data.topProperties.map((p) => (
-              <div key={p.name} className="flex items-center justify-between text-sm">
-                <span className="text-[var(--color-ink-soft)]">{p.name}</span>
-                <span className="font-mono text-[var(--color-ink)]">{p.work_order_count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

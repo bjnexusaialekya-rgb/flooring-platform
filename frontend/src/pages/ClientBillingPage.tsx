@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Receipt } from 'lucide-react';
 import { api } from '../lib/api';
+import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 
 type Statement = {
   id: string;
@@ -56,7 +58,7 @@ function CheckoutForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function ClientBillingPage() {
-  const [statements, setStatements] = useState<Statement[]>([]);
+  const [statements, setStatements] = useState<Statement[] | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +80,9 @@ export function ClientBillingPage() {
     }
   }
 
+  const unpaid = statements?.filter((s) => !paidIds.has(s.id)) ?? [];
+  const outstandingTotal = unpaid.reduce((sum, s) => sum + Number(s.total_amount), 0);
+
   return (
     <div className="max-w-3xl">
       <h1 className="font-[var(--font-display)] text-2xl font-semibold text-[var(--color-ink)] mb-1">
@@ -93,40 +98,71 @@ export function ClientBillingPage() {
         </div>
       )}
 
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
-              <th className="pb-2 font-medium">Property</th>
-              <th className="pb-2 font-medium">Period</th>
-              <th className="pb-2 font-medium">Amount Due</th>
-              <th className="pb-2 font-medium">Status</th>
-              <th className="pb-2 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {statements.map((s) => (
-              <tr key={s.id} className="border-b last:border-0 border-[var(--color-concrete-light)] align-top">
-                <td className="py-2.5">{s.property_name}</td>
-                <td className="py-2.5 text-xs">{s.billing_period_start} to {s.billing_period_end}</td>
-                <td className="py-2.5 font-mono text-xs">${Number(s.total_amount).toFixed(2)}</td>
-                <td className="py-2.5 text-xs">{paidIds.has(s.id) ? 'Paid' : s.batch_status}</td>
-                <td className="py-2.5">
-                  {!paidIds.has(s.id) && stripePromise && (
-                    <button
-                      onClick={() => startPayment(s.id)}
-                      className="text-xs font-medium text-[var(--color-primary)] hover:underline"
-                    >
-                      Pay Now
-                    </button>
-                  )}
-                </td>
+      {statements !== null && statements.length > 0 && (
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <MetricCard
+            label="Outstanding Balance"
+            value={`$${outstandingTotal.toFixed(2)}`}
+            tone={outstandingTotal > 0 ? 'danger' : 'success'}
+          />
+          <MetricCard label="Statements" value={String(statements.length)} />
+        </div>
+      )}
+
+      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+        {statements === null && <TableSkeleton columns={5} rows={3} />}
+
+        {statements !== null && statements.length === 0 && (
+          <EmptyState
+            icon={<Receipt size={22} />}
+            title="No statements yet"
+            description="Your consolidated statements will appear here once a billing period is closed out."
+          />
+        )}
+
+        {statements !== null && statements.length > 0 && (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
+                <th className="px-5 py-3 font-medium">Property</th>
+                <th className="px-5 py-3 font-medium">Period</th>
+                <th className="px-5 py-3 font-medium">Amount Due</th>
+                <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {statements.length === 0 && (
-          <p className="text-sm text-[var(--color-concrete)] py-4">No statements yet.</p>
+            </thead>
+            <tbody>
+              {statements.map((s) => (
+                <tr key={s.id} className="border-b last:border-0 border-[var(--color-concrete-light)] align-top">
+                  <td className="px-5 py-3.5">{s.property_name}</td>
+                  <td className="px-5 py-3.5 text-xs">{s.billing_period_start} to {s.billing_period_end}</td>
+                  <td className="px-5 py-3.5 font-mono text-xs">${Number(s.total_amount).toFixed(2)}</td>
+                  <td className="px-5 py-3.5">
+                    <span
+                      className={[
+                        'inline-block px-2.5 py-1 rounded-full text-xs font-medium capitalize',
+                        paidIds.has(s.id)
+                          ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
+                          : 'bg-[var(--color-concrete-light)] text-[var(--color-concrete)]',
+                      ].join(' ')}
+                    >
+                      {paidIds.has(s.id) ? 'Paid' : s.batch_status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    {!paidIds.has(s.id) && stripePromise && (
+                      <button
+                        onClick={() => startPayment(s.id)}
+                        className="text-xs font-medium text-[var(--color-primary)] hover:underline"
+                      >
+                        Pay Now
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
 

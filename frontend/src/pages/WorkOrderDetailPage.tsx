@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Layers } from 'lucide-react';
 import { api, ApiRequestError, type WorkOrderPortalView } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { StatusPipeline } from '../components/StatusPipeline';
+import { EmptyState, TableSkeleton } from '../components/UIState';
 
 type StockShortage = {
   materialId: string;
@@ -12,7 +14,6 @@ type StockShortage = {
   required: number;
   shortBy: number;
 };
-
 
 type StaffLineItem = {
   id: string;
@@ -33,6 +34,24 @@ const NEXT_STATUS: Record<string, string> = {
 
 type StaffMember = { id: string; display_name: string };
 
+function DetailSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="mb-6">
+        <div className="h-6 bg-[var(--color-concrete-light)] rounded w-56 mb-2" />
+        <div className="h-3 bg-[var(--color-concrete-light)] rounded w-36" />
+      </div>
+      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6 mb-6">
+        <div className="h-3 bg-[var(--color-concrete-light)] rounded w-full mb-4" />
+        <div className="h-8 bg-[var(--color-concrete-light)] rounded w-40" />
+      </div>
+      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+        <TableSkeleton columns={3} rows={4} />
+      </div>
+    </div>
+  );
+}
+
 export function WorkOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -46,6 +65,7 @@ export function WorkOrderDetailPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [advancing, setAdvancing] = useState(false);
   const [stockShortages, setStockShortages] = useState<StockShortage[] | null>(null);
+  const [staffLoading, setStaffLoading] = useState(false);
 
   const isStaff = user?.role === 'staff' || user?.role === 'admin';
 
@@ -61,6 +81,7 @@ export function WorkOrderDetailPage() {
     // /work-orders/:id/staff-view mirrors portal-view but without the
     // column exclusion, guarded by requireRole('staff','admin').
     if (isStaff) {
+      setStaffLoading(true);
       api
         .get<{ lineItems: StaffLineItem[]; assigned_to: string | null }>(`/work-orders/${id}/staff-view`)
         .then((res) => {
@@ -70,7 +91,8 @@ export function WorkOrderDetailPage() {
         })
         .catch(() => {
           /* non-fatal: pricing panel just won't populate */
-        });
+        })
+        .finally(() => setStaffLoading(false));
       api.get<StaffMember[]>('/users?role=staff').then(setStaffMembers).catch(() => {});
     }
   }, [id, isStaff]);
@@ -137,7 +159,7 @@ export function WorkOrderDetailPage() {
   }
 
   if (!order) {
-    return <div className="text-sm text-[var(--color-concrete)]">Loading…</div>;
+    return <DetailSkeleton />;
   }
 
   return (
@@ -222,83 +244,99 @@ export function WorkOrderDetailPage() {
       </div>
 
       {/* ---- Client-visible section: quantities only, no price ---- */}
-      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
-        <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
+      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+        <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] px-6 pt-6 mb-4">
           Rooms &amp; Materials
         </h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
-              <th className="pb-2 font-medium">Room</th>
-              <th className="pb-2 font-medium">Quantity (calculated)</th>
-              <th className="pb-2 font-medium">Quantity (actual)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order.line_items.map((li, i) => (
-              <tr key={i} className="border-b last:border-0 border-[var(--color-concrete-light)]">
-                <td className="py-2.5">{li.roomName}</td>
-                <td className="py-2.5 font-mono text-xs">{li.quantityCalculated}</td>
-                <td className="py-2.5 font-mono text-xs text-[var(--color-concrete)]">
-                  {li.quantityActualUsed ?? '—'}
-                </td>
+
+        {order.line_items.length === 0 ? (
+          <EmptyState
+            icon={<Layers size={22} />}
+            title="No rooms recorded"
+            description="Room and material quantities will appear here once this work order is scoped."
+          />
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
+                <th className="pb-2 pl-6 font-medium">Room</th>
+                <th className="pb-2 font-medium">Quantity (calculated)</th>
+                <th className="pb-2 pr-6 font-medium">Quantity (actual)</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {order.line_items.map((li, i) => (
+                <tr key={i} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+                  <td className="py-2.5 pl-6">{li.roomName}</td>
+                  <td className="py-2.5 font-mono text-xs">{li.quantityCalculated}</td>
+                  <td className="py-2.5 pr-6 font-mono text-xs text-[var(--color-concrete)]">
+                    {li.quantityActualUsed ?? '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* ---- Staff-only section: literally rendered below the
            boundary line. This is the visual signature — the same cut
            that the SQL SELECT enforces server-side is shown here. ---- */}
-      {isStaff && staffLineItems.length > 0 && (
+      {isStaff && (staffLoading || staffLineItems.length > 0) && (
         <div className="boundary-line">
-          <div className="bg-[var(--color-amber-soft)] rounded-xl border border-[var(--color-amber)]/30 p-6 mt-2">
-            <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-amber-dark)] mb-4">
+          <div className="bg-[var(--color-amber-soft)] rounded-xl border border-[var(--color-amber)]/30 overflow-hidden mt-2">
+            <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-amber-dark)] px-6 pt-6 mb-4">
               Pricing &amp; Cost Basis
             </h2>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-amber-dark)]/70 border-b border-[var(--color-amber)]/30">
-                  <th className="pb-2 font-medium">Room</th>
-                  <th className="pb-2 font-medium">Unit Price Charged</th>
-                  <th className="pb-2 font-medium">Internal Cost Basis</th>
-                  <th className="pb-2 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {staffLineItems.map((li) => (
-                  <tr key={li.id} className="border-b last:border-0 border-[var(--color-amber)]/20">
-                    <td className="py-2.5">{li.room_name}</td>
-                    <td className="py-2.5">
-                      <input
-                        type="number"
-                        step="0.01"
-                        defaultValue={li.unit_price_charged ?? ''}
-                        onChange={(e) =>
-                          setPriceDrafts((prev) => ({ ...prev, [li.id]: e.target.value }))
-                        }
-                        className="w-24 px-2 py-1 rounded border border-[var(--color-amber)]/40 font-mono text-xs
-                                   focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]"
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="py-2.5 font-mono text-xs text-[var(--color-amber-dark)]/70">
-                      {li.internal_cost_basis ?? '—'}
-                    </td>
-                    <td className="py-2.5">
-                      <button
-                        onClick={() => savePrice(li.id)}
-                        disabled={saving === li.id}
-                        className="text-xs font-medium text-[var(--color-amber-dark)] hover:underline disabled:opacity-50"
-                      >
-                        {saving === li.id ? 'Saving…' : 'Save'}
-                      </button>
-                    </td>
+
+            {staffLoading ? (
+              <div className="px-6 pb-6">
+                <TableSkeleton columns={4} rows={2} />
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-amber-dark)]/70 border-b border-[var(--color-amber)]/30">
+                    <th className="pb-2 pl-6 font-medium">Room</th>
+                    <th className="pb-2 font-medium">Unit Price Charged</th>
+                    <th className="pb-2 font-medium">Internal Cost Basis</th>
+                    <th className="pb-2 pr-6 font-medium"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {staffLineItems.map((li) => (
+                    <tr key={li.id} className="border-b last:border-0 border-[var(--color-amber)]/20">
+                      <td className="py-2.5 pl-6">{li.room_name}</td>
+                      <td className="py-2.5">
+                        <input
+                          type="number"
+                          step="0.01"
+                          defaultValue={li.unit_price_charged ?? ''}
+                          onChange={(e) =>
+                            setPriceDrafts((prev) => ({ ...prev, [li.id]: e.target.value }))
+                          }
+                          className="w-24 px-2 py-1 rounded border border-[var(--color-amber)]/40 font-mono text-xs
+                                     focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]"
+                          placeholder="0.00"
+                        />
+                      </td>
+                      <td className="py-2.5 font-mono text-xs text-[var(--color-amber-dark)]/70">
+                        {li.internal_cost_basis ?? '—'}
+                      </td>
+                      <td className="py-2.5 pr-6">
+                        <button
+                          onClick={() => savePrice(li.id)}
+                          disabled={saving === li.id}
+                          className="text-xs font-medium text-[var(--color-amber-dark)] hover:underline disabled:opacity-50"
+                        >
+                          {saving === li.id ? 'Saving…' : 'Save'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}

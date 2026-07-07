@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Package, FileSearch } from 'lucide-react';
 import { api, ApiRequestError, type PurchaseOrderListItem, type PurchaseOrderDetail, type InventoryItem } from '../lib/api';
+import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 
 const VALID_NEXT: Record<string, string[]> = {
   draft: ['submitted', 'cancelled'],
@@ -8,8 +10,23 @@ const VALID_NEXT: Record<string, string[]> = {
   cancelled: [],
 };
 
+const STATUS_BADGE: Record<string, string> = {
+  draft: 'bg-[var(--color-concrete-light)] text-[var(--color-concrete)]',
+  submitted: 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]',
+  received: 'bg-[var(--color-success-soft)] text-[var(--color-success)]',
+  cancelled: 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]',
+};
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium capitalize ${STATUS_BADGE[status] ?? STATUS_BADGE.draft}`}>
+      {status}
+    </span>
+  );
+}
+
 export function PurchaseOrdersPage() {
-  const [orders, setOrders] = useState<PurchaseOrderListItem[]>([]);
+  const [orders, setOrders] = useState<PurchaseOrderListItem[] | null>(null);
   const [materials, setMaterials] = useState<InventoryItem[]>([]);
   const [selected, setSelected] = useState<PurchaseOrderDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +96,9 @@ export function PurchaseOrdersPage() {
     }
   }
 
+  const openOrders = orders?.filter((o) => o.status === 'draft' || o.status === 'submitted') ?? [];
+  const openValue = openOrders.reduce((sum, o) => sum + Number(o.total_cost), 0);
+
   return (
     <div>
       <div className="mb-6">
@@ -89,6 +109,14 @@ export function PurchaseOrdersPage() {
       {error && (
         <div className="text-sm text-[var(--color-danger)] bg-[var(--color-danger-soft)] rounded-md px-4 py-3 mb-4">
           {error}
+        </div>
+      )}
+
+      {orders !== null && orders.length > 0 && (
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <MetricCard label="Total Purchase Orders" value={String(orders.length)} />
+          <MetricCard label="Open Orders" value={String(openOrders.length)} />
+          <MetricCard label="Open Order Value" value={`$${openValue.toFixed(2)}`} />
         </div>
       )}
 
@@ -168,40 +196,62 @@ export function PurchaseOrdersPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
-          <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">All Purchase Orders</h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
-                <th className="pb-2 font-medium">Status</th>
-                <th className="pb-2 font-medium">Lines</th>
-                <th className="pb-2 font-medium">Total</th>
-                <th className="pb-2 font-medium">Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((po) => (
-                <tr
-                  key={po.id}
-                  onClick={() => openDetail(po.id)}
-                  className="border-b last:border-0 border-[var(--color-concrete-light)] cursor-pointer hover:bg-[var(--color-concrete-light)]/20"
-                >
-                  <td className="py-2.5 capitalize">{po.status}</td>
-                  <td className="py-2.5 font-mono text-xs">{po.line_item_count}</td>
-                  <td className="py-2.5 font-mono text-xs">${Number(po.total_cost).toFixed(2)}</td>
-                  <td className="py-2.5 text-xs text-[var(--color-concrete)]">{new Date(po.created_at).toLocaleDateString()}</td>
+        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+          <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] px-6 pt-6 mb-4">All Purchase Orders</h2>
+
+          {orders === null && <TableSkeleton columns={4} rows={4} />}
+
+          {orders !== null && orders.length === 0 && (
+            <EmptyState
+              icon={<Package size={22} />}
+              title="No purchase orders yet"
+              description="Create your first purchase order above to start receiving stock into inventory."
+            />
+          )}
+
+          {orders !== null && orders.length > 0 && (
+            <table className="w-full text-sm px-6">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
+                  <th className="pb-2 pl-6 font-medium">Status</th>
+                  <th className="pb-2 font-medium">Lines</th>
+                  <th className="pb-2 font-medium">Total</th>
+                  <th className="pb-2 pr-6 font-medium">Created</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {orders.map((po) => (
+                  <tr
+                    key={po.id}
+                    onClick={() => openDetail(po.id)}
+                    className="border-b last:border-0 border-[var(--color-concrete-light)] cursor-pointer hover:bg-[var(--color-concrete-light)]/20"
+                  >
+                    <td className="py-2.5 pl-6"><StatusBadge status={po.status} /></td>
+                    <td className="py-2.5 font-mono text-xs">{po.line_item_count}</td>
+                    <td className="py-2.5 font-mono text-xs">${Number(po.total_cost).toFixed(2)}</td>
+                    <td className="py-2.5 pr-6 text-xs text-[var(--color-concrete)]">{new Date(po.created_at).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] p-6">
           <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">Detail</h2>
-          {!selected && <p className="text-sm text-[var(--color-concrete)]">Select a purchase order to view details.</p>}
+          {!selected && (
+            <EmptyState
+              icon={<FileSearch size={22} />}
+              title="Nothing selected"
+              description="Select a purchase order from the list to view its line items and status."
+            />
+          )}
           {selected && (
             <div>
-              <p className="text-sm mb-1">Status: <span className="capitalize font-medium">{selected.status}</span></p>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm">Status:</span>
+                <StatusBadge status={selected.status} />
+              </div>
               <p className="text-xs text-[var(--color-concrete)] mb-4">Created by {selected.created_by_name ?? '—'}</p>
               <table className="w-full text-sm mb-4">
                 <tbody>
