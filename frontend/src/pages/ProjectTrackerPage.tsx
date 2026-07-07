@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { FolderKanban } from 'lucide-react';
 import { api } from '../lib/api';
-import { EmptyState, TableSkeleton } from '../components/UIState';
+import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 
 type Tracker = {
   id: string;
@@ -38,6 +38,10 @@ export function ProjectTrackerPage() {
   const [projectName, setProjectName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [targetEndDate, setTargetEndDate] = useState('');
+
+  const activeCount = trackers?.filter((t) => t.status === 'active').length ?? 0;
+  const totalLabor = trackers?.reduce((sum, t) => sum + Number(t.summary_labor_total || 0), 0) ?? 0;
+  const totalMaterial = trackers?.reduce((sum, t) => sum + Number(t.summary_material_total || 0), 0) ?? 0;
 
   function load() {
     api.get<Tracker[]>('/project-trackers').then(setTrackers).catch((err) => setError(err.message));
@@ -156,6 +160,14 @@ export function ProjectTrackerPage() {
         </form>
       )}
 
+      {trackers !== null && trackers.length > 0 && (
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <MetricCard label="Active projects" value={String(activeCount)} tone="success" />
+          <MetricCard label="Total labor" value={`$${totalLabor.toFixed(2)}`} />
+          <MetricCard label="Total material" value={`$${totalMaterial.toFixed(2)}`} />
+        </div>
+      )}
+
       <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden">
         {trackers === null && <TableSkeleton columns={5} rows={4} />}
 
@@ -192,7 +204,9 @@ export function ProjectTrackerPage() {
                       step="0.01"
                       defaultValue={t.summary_labor_total}
                       onBlur={(e) => updateSummary(t.id, 'summaryLaborTotal', e.target.value)}
-                      className="w-24 px-2 py-1 rounded border border-[var(--color-concrete-light)] font-mono text-xs"
+                      className="w-24 px-2 py-1 rounded-md border border-[var(--color-concrete-light)] bg-[var(--color-paper)]
+                                 font-mono text-xs text-[var(--color-ink)] transition-shadow
+                                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] focus:bg-[var(--color-panel)]"
                     />
                   </td>
                   <td className="px-5 py-3.5">
@@ -201,7 +215,9 @@ export function ProjectTrackerPage() {
                       step="0.01"
                       defaultValue={t.summary_material_total}
                       onBlur={(e) => updateSummary(t.id, 'summaryMaterialTotal', e.target.value)}
-                      className="w-24 px-2 py-1 rounded border border-[var(--color-concrete-light)] font-mono text-xs"
+                      className="w-24 px-2 py-1 rounded-md border border-[var(--color-concrete-light)] bg-[var(--color-paper)]
+                                 font-mono text-xs text-[var(--color-ink)] transition-shadow
+                                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] focus:bg-[var(--color-panel)]"
                     />
                   </td>
                 </tr>
