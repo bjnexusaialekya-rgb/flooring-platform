@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { FolderKanban } from 'lucide-react';
 import { api } from '../lib/api';
+import { EmptyState, TableSkeleton } from '../components/UIState';
 
 type Tracker = {
   id: string;
@@ -12,8 +14,24 @@ type Tracker = {
   summary_material_total: string;
 };
 
+const TRACKER_STATUS_STYLES: Record<string, string> = {
+  active: 'bg-[var(--color-status-approved-soft)] text-[var(--color-status-approved)]',
+  on_hold: 'bg-[var(--color-status-submitted-soft)] text-[var(--color-status-submitted)]',
+  completed: 'bg-[var(--color-status-completed-soft)] text-[var(--color-status-completed)]',
+};
+
+function TrackerStatusPill({ status }: { status: string }) {
+  const style =
+    TRACKER_STATUS_STYLES[status] ?? 'bg-[var(--color-concrete-light)] text-[var(--color-ink-soft)]';
+  return (
+    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium capitalize ${style}`}>
+      {status.replace(/_/g, ' ')}
+    </span>
+  );
+}
+
 export function ProjectTrackerPage() {
-  const [trackers, setTrackers] = useState<Tracker[]>([]);
+  const [trackers, setTrackers] = useState<Tracker[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [propertyId, setPropertyId] = useState('');
@@ -139,46 +157,57 @@ export function ProjectTrackerPage() {
       )}
 
       <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[var(--color-concrete-light)] text-left text-xs uppercase tracking-wide text-[var(--color-concrete)]">
-              <th className="px-5 py-3 font-medium">Project</th>
-              <th className="px-5 py-3 font-medium">Property</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Labor Total</th>
-              <th className="px-5 py-3 font-medium">Material Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {trackers.map((t) => (
-              <tr key={t.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
-                <td className="px-5 py-3.5">{t.project_name}</td>
-                <td className="px-5 py-3.5 text-[var(--color-concrete)]">{t.property_name}</td>
-                <td className="px-5 py-3.5 capitalize">{t.status.replace(/_/g, ' ')}</td>
-                <td className="px-5 py-3.5">
-                  <input
-                    type="number"
-                    step="0.01"
-                    defaultValue={t.summary_labor_total}
-                    onBlur={(e) => updateSummary(t.id, 'summaryLaborTotal', e.target.value)}
-                    className="w-24 px-2 py-1 rounded border border-[var(--color-concrete-light)] font-mono text-xs"
-                  />
-                </td>
-                <td className="px-5 py-3.5">
-                  <input
-                    type="number"
-                    step="0.01"
-                    defaultValue={t.summary_material_total}
-                    onBlur={(e) => updateSummary(t.id, 'summaryMaterialTotal', e.target.value)}
-                    className="w-24 px-2 py-1 rounded border border-[var(--color-concrete-light)] font-mono text-xs"
-                  />
-                </td>
+        {trackers === null && <TableSkeleton columns={5} rows={4} />}
+
+        {trackers !== null && trackers.length === 0 && (
+          <EmptyState
+            icon={<FolderKanban size={22} />}
+            title="No projects tracked yet"
+            description="Longer 2–4 week projects will appear here once created — summary totals feed straight into consolidated billing."
+          />
+        )}
+
+        {trackers !== null && trackers.length > 0 && (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[var(--color-concrete-light)] text-left text-xs uppercase tracking-wide text-[var(--color-concrete)]">
+                <th className="px-5 py-3 font-medium">Project</th>
+                <th className="px-5 py-3 font-medium">Property</th>
+                <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium">Labor Total</th>
+                <th className="px-5 py-3 font-medium">Material Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {trackers.length === 0 && (
-          <div className="text-center py-16 text-[var(--color-concrete)] text-sm">No projects tracked yet.</div>
+            </thead>
+            <tbody>
+              {trackers.map((t) => (
+                <tr key={t.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+                  <td className="px-5 py-3.5">{t.project_name}</td>
+                  <td className="px-5 py-3.5 text-[var(--color-concrete)]">{t.property_name}</td>
+                  <td className="px-5 py-3.5">
+                    <TrackerStatusPill status={t.status} />
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <input
+                      type="number"
+                      step="0.01"
+                      defaultValue={t.summary_labor_total}
+                      onBlur={(e) => updateSummary(t.id, 'summaryLaborTotal', e.target.value)}
+                      className="w-24 px-2 py-1 rounded border border-[var(--color-concrete-light)] font-mono text-xs"
+                    />
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <input
+                      type="number"
+                      step="0.01"
+                      defaultValue={t.summary_material_total}
+                      onBlur={(e) => updateSummary(t.id, 'summaryMaterialTotal', e.target.value)}
+                      className="w-24 px-2 py-1 rounded border border-[var(--color-concrete-light)] font-mono text-xs"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

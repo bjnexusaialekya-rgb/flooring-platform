@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Boxes } from 'lucide-react';
 import { api, type InventoryItem } from '../lib/api';
+import { EmptyState, TableSkeleton } from '../components/UIState';
 
 export function InventoryPage() {
   const [items, setItems] = useState<InventoryItem[] | null>(null);
@@ -24,8 +26,18 @@ export function InventoryPage() {
         </div>
       )}
 
-      {items && (
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+        {items === null && <TableSkeleton columns={6} rows={5} />}
+
+        {items !== null && items.length === 0 && (
+          <EmptyState
+            icon={<Boxes size={22} />}
+            title="No materials tracked yet"
+            description="Materials will appear here once they're added to your catalog and stocked."
+          />
+        )}
+
+        {items !== null && items.length > 0 && (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--color-concrete-light)] text-left text-xs uppercase tracking-wide text-[var(--color-concrete)]">
@@ -60,8 +72,8 @@ export function InventoryPage() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

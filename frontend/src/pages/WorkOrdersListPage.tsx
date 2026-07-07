@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ClipboardList, SearchX } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { EmptyState, TableSkeleton } from '../components/UIState';
 
 type WorkOrderSummary = {
   id: string;
@@ -107,20 +109,30 @@ export function WorkOrdersListPage() {
         </div>
       )}
 
-      {orders && orders.length === 0 && (
-        <div className="text-center py-16 text-[var(--color-concrete)] text-sm">
-          No work orders yet.
-        </div>
-      )}
+      <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+        {orders === null && <TableSkeleton columns={4} rows={5} />}
 
-      {orders && orders.length > 0 && filtered.length === 0 && (
-        <div className="text-center py-16 text-[var(--color-concrete)] text-sm">
-          No work orders match this filter.
-        </div>
-      )}
+        {orders !== null && orders.length === 0 && (
+          <EmptyState
+            icon={<ClipboardList size={22} />}
+            title="No work orders yet"
+            description={
+              user?.role === 'client'
+                ? 'Submit your first work order to get started.'
+                : 'Work orders will appear here once a property manager submits one.'
+            }
+          />
+        )}
 
-      {filtered.length > 0 && (
-        <div className="bg-[var(--color-panel)] rounded-xl border border-[var(--color-concrete-light)] overflow-hidden">
+        {orders !== null && orders.length > 0 && filtered.length === 0 && (
+          <EmptyState
+            icon={<SearchX size={22} />}
+            title="No work orders match this filter"
+            description="Try a different search term or status filter."
+          />
+        )}
+
+        {filtered.length > 0 && (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--color-concrete-light)] text-left text-xs uppercase tracking-wide text-[var(--color-concrete)]">
@@ -154,8 +166,8 @@ export function WorkOrdersListPage() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
