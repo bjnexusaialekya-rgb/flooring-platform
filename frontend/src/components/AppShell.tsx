@@ -11,6 +11,7 @@ import {
   UserPlus,
   Building2,
   CreditCard,
+  Truck,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -24,6 +25,7 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof Clip
     { to: '/work-orders', label: 'Work Order Queue', icon: ClipboardList },
     { to: '/project-trackers', label: 'Project Trackers', icon: FolderKanban },
     { to: '/inventory', label: 'Inventory', icon: Boxes },
+    { to: '/purchase-orders', label: 'Purchase Orders', icon: Truck },
     { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
   ],
   admin: [
@@ -31,6 +33,7 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof Clip
     { to: '/work-orders', label: 'Work Order Queue', icon: ClipboardList },
     { to: '/project-trackers', label: 'Project Trackers', icon: FolderKanban },
     { to: '/inventory', label: 'Inventory', icon: Boxes },
+    { to: '/purchase-orders', label: 'Purchase Orders', icon: Truck },
     { to: '/billing', label: 'Billing', icon: Receipt },
     { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
     { to: '/add-client', label: 'Add Login', icon: UserPlus },
