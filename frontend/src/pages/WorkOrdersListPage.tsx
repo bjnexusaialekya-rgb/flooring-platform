@@ -5,6 +5,7 @@ import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { KebabMenu } from '../components/KebabMenu';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { FilterChip } from '../components/FilterChip';
 
 type WorkOrderSummary = {
@@ -93,6 +94,7 @@ export function WorkOrdersListPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const isStaffOrAdmin = user?.role === 'staff' || user?.role === 'admin';
 
@@ -258,7 +260,7 @@ export function WorkOrdersListPage() {
           </span>
           <div className="flex items-center gap-3">
             <button
-              onClick={bulkAdvance}
+              onClick={() => setConfirmOpen(true)}
               disabled={bulkUpdating}
               className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white
                          text-xs font-medium px-3 py-1.5 rounded-md transition-colors disabled:opacity-60"
@@ -350,10 +352,10 @@ export function WorkOrdersListPage() {
                       </Link>
                     </td>
                     <td className="px-5 py-4">
-                      {wo.target_turn_date ? (
+                      {wo.target_turn_date && !isNaN(new Date(wo.target_turn_date).getTime()) ? (
                         <span className={`flex items-center gap-1.5 ${overdue ? 'text-[var(--color-danger)] font-medium' : 'text-[var(--color-ink-soft)]'}`}>
                           {overdue && <AlertTriangle size={13} />}
-                          {wo.target_turn_date}
+                          {new Date(wo.target_turn_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
                         </span>
                       ) : (
                         <span className="text-[var(--color-ink-soft)]">—</span>
@@ -377,6 +379,15 @@ export function WorkOrdersListPage() {
           </table>
         )}
       </div>
+          <ConfirmDialog
+        isOpen={confirmOpen}
+        title="Advance selected work orders?"
+        message={`This will move ${selected.size} work order${selected.size === 1 ? '' : 's'} to the next stage. This cannot be undone automatically.`}
+        confirmText="Advance"
+        isLoading={bulkUpdating}
+        onConfirm={() => { setConfirmOpen(false); bulkAdvance(); }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }
