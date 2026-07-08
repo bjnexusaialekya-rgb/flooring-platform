@@ -3,6 +3,7 @@ import { Receipt } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { Button } from '../components/Button';
+import { useToast } from '../components/Toast';
 
 type PaymentStatusRow = {
   corporate_name: string;
@@ -27,6 +28,7 @@ export function AdminPaymentDashboardPage() {
   const [advances, setAdvances] = useState<AdvanceStatusRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [clearingId, setClearingId] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
 
   const loadData = useCallback(async () => {
     try {
@@ -50,8 +52,11 @@ export function AdminPaymentDashboardPage() {
     try {
       await api.patch(`/admin-setup/clients/${clientId}/clear-advance`);
       await loadData();
+      showSuccess('Advance cleared');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to clear advance');
+      // Transient action failure -> toast. The inline `error` banner below
+      // stays reserved for the page-level loadData() failure.
+      showError(err instanceof Error ? err.message : 'Failed to clear advance');
     } finally {
       setClearingId(null);
     }

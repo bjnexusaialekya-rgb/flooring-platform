@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Layers } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Layers, ArrowLeft } from 'lucide-react';
 import { api, ApiRequestError, type WorkOrderPortalView } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { StatusPipeline } from '../components/StatusPipeline';
 import { EmptyState, TableSkeleton } from '../components/UIState';
 import { Button } from '../components/Button';
+import { useToast } from '../components/Toast';
 
 type StockShortage = {
   materialId: string;
@@ -67,6 +68,7 @@ export function WorkOrderDetailPage() {
   const [advancing, setAdvancing] = useState(false);
   const [stockShortages, setStockShortages] = useState<StockShortage[] | null>(null);
   const [staffLoading, setStaffLoading] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   const isStaff = user?.role === 'staff' || user?.role === 'admin';
 
@@ -104,8 +106,11 @@ export function WorkOrderDetailPage() {
     const dateToSend = newScheduledDate !== undefined ? newScheduledDate : scheduledDate;
     try {
       await api.patch(`/work-orders/${id}/assign`, { assignedTo: newAssignedTo || null, scheduledDate: dateToSend || null });
+      showSuccess('Assignment updated');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to assign');
+      // Action-level failure: toast, not the page-replacing `error` state
+      // (that's reserved for the initial portal-view/staff-view load).
+      showError(err instanceof Error ? err.message : 'Failed to assign');
     }
   }
 
@@ -120,8 +125,9 @@ export function WorkOrderDetailPage() {
       setStaffLineItems((prev) =>
         prev.map((li) => (li.id === lineItemId ? { ...li, unit_price_charged: Number(value) } : li))
       );
+      showSuccess('Price saved');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save price');
+      showError(err instanceof Error ? err.message : 'Failed to save price');
     } finally {
       setSaving(null);
     }
@@ -132,7 +138,6 @@ export function WorkOrderDetailPage() {
     const nextStatus = NEXT_STATUS[order.status];
     if (!nextStatus) return;
     setAdvancing(true);
-    setError(null);
     try {
       const updated = await api.patch<{ id: string; status: string }>(`/work-orders/${id}/status`, {
         status: nextStatus,
@@ -140,11 +145,12 @@ export function WorkOrderDetailPage() {
       });
       setOrder((prev) => (prev ? { ...prev, status: updated.status } : prev));
       setStockShortages(null);
+      showSuccess(`Status advanced to ${updated.status.replace(/_/g, ' ')}`);
     } catch (err) {
       if (err instanceof ApiRequestError && err.status === 409 && Array.isArray(err.body.stockShortages)) {
         setStockShortages(err.body.stockShortages as StockShortage[]);
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to advance status');
+        showError(err instanceof Error ? err.message : 'Failed to advance status');
       }
     } finally {
       setAdvancing(false);
@@ -165,6 +171,13 @@ export function WorkOrderDetailPage() {
 
   return (
     <div>
+      <Link
+        to="/work-orders"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-concrete)] hover:text-[var(--color-ink)] mb-3"
+      >
+        <ArrowLeft size={13} />
+        Work Orders
+      </Link>
       <div className="mb-6">
         <h1 className="font-[var(--font-display)] text-2xl font-semibold text-[var(--color-ink)]">
           Work Order {order.po_number ?? `#${order.id.slice(0, 8)}`}

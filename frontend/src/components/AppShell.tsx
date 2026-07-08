@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   ClipboardList,
   PlusCircle,
@@ -75,6 +75,7 @@ const NAV_BY_ROLE: Record<string, NavGroup[]> = {
 
 export function AppShell() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   if (!user) return null;
 
   const navGroups = NAV_BY_ROLE[user.role] ?? [];
@@ -141,7 +142,12 @@ export function AppShell() {
 
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-6xl mx-auto px-8 py-8">
-          <Outlet />
+          {/* Keying on pathname re-triggers the CSS animation on every route
+              change, giving navigation a soft fade+rise instead of an
+              instant content swap. */}
+          <div key={location.pathname} className="animate-page-in">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>
