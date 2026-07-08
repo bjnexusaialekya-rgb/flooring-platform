@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { FolderKanban } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
+import { Button } from '../components/Button';
 
 type Tracker = {
   id: string;
@@ -38,6 +39,7 @@ export function ProjectTrackerPage() {
   const [projectName, setProjectName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [targetEndDate, setTargetEndDate] = useState('');
+  const [creating, setCreating] = useState(false);
 
   const activeCount = trackers?.filter((t) => t.status === 'active').length ?? 0;
   const totalLabor = trackers?.reduce((sum, t) => sum + Number(t.summary_labor_total || 0), 0) ?? 0;
@@ -52,6 +54,7 @@ export function ProjectTrackerPage() {
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setCreating(true);
     try {
       await api.post('/project-trackers', { propertyId, projectName, startDate, targetEndDate });
       setShowForm(false);
@@ -62,6 +65,8 @@ export function ProjectTrackerPage() {
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create project');
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -86,13 +91,7 @@ export function ProjectTrackerPage() {
             consolidated billing, not a separate invoice type.
           </p>
         </div>
-        <button
-          onClick={() => setShowForm((s) => !s)}
-          className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white
-                     text-sm font-medium px-4 py-2.5 rounded-md transition-colors"
-        >
-          + New Project
-        </button>
+        <Button onClick={() => setShowForm((s) => !s)}>+ New Project</Button>
       </div>
 
       {error && (
@@ -150,13 +149,9 @@ export function ProjectTrackerPage() {
               />
             </div>
           </div>
-          <button
-            type="submit"
-            className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)]
-                       text-white font-medium text-sm rounded-md py-2.5 transition-colors"
-          >
+          <Button type="submit" isLoading={creating} className="w-full">
             Create Project
-          </button>
+          </Button>
         </form>
       )}
 

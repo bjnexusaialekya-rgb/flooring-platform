@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { api } from '../lib/api';
+import { Button } from '../components/Button';
 
 type ClientOption = { id: string; corporate_name: string };
 
@@ -11,6 +12,7 @@ export function AddClientPage() {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     api
@@ -23,6 +25,7 @@ export function AddClientPage() {
     e.preventDefault();
     setError(null);
     setResult(null);
+    setSubmitting(true);
     try {
       await api.post('/auth/register', {
         displayName,
@@ -38,6 +41,8 @@ export function AddClientPage() {
       setClientId('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create login');
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -81,9 +86,9 @@ export function AddClientPage() {
         </div>
         {error && <div className="text-sm text-[var(--color-danger)] bg-[var(--color-danger-soft)] rounded-md px-3 py-2">{error}</div>}
         {result && <div className="text-sm text-[var(--color-success)] bg-[var(--color-success-soft)] rounded-md px-3 py-2">{result}</div>}
-        <button type="submit" className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white font-medium text-sm rounded-md py-2.5 transition-colors">
+        <Button type="submit" isLoading={submitting} className="w-full">
           Create Login
-        </button>
+        </Button>
       </form>
     </div>
   );

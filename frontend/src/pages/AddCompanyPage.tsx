@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { api } from '../lib/api';
 import { Building2, MapPin } from 'lucide-react';
+import { Button } from '../components/Button';
 
 type ClientOption = { id: string; corporate_name: string };
 
@@ -15,6 +16,7 @@ export function AddCompanyPage() {
   const [advanceAmount, setAdvanceAmount] = useState('');
   const [companyResult, setCompanyResult] = useState<string | null>(null);
   const [companyError, setCompanyError] = useState<string | null>(null);
+  const [creatingCompany, setCreatingCompany] = useState(false);
 
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [clientId, setClientId] = useState('');
@@ -25,6 +27,7 @@ export function AddCompanyPage() {
   const [zipCode, setZipCode] = useState('');
   const [propertyResult, setPropertyResult] = useState<string | null>(null);
   const [propertyError, setPropertyError] = useState<string | null>(null);
+  const [addingProperty, setAddingProperty] = useState(false);
 
   async function loadClients() {
     try {
@@ -43,6 +46,7 @@ export function AddCompanyPage() {
     e.preventDefault();
     setCompanyError(null);
     setCompanyResult(null);
+    setCreatingCompany(true);
     try {
       const created = await api.post<{ corporate_name: string }>('/admin-setup/clients', {
         corporateName,
@@ -65,6 +69,8 @@ export function AddCompanyPage() {
       await loadClients();
     } catch (err) {
       setCompanyError(err instanceof Error ? err.message : 'Failed to create company');
+    } finally {
+      setCreatingCompany(false);
     }
   }
 
@@ -72,6 +78,7 @@ export function AddCompanyPage() {
     e.preventDefault();
     setPropertyError(null);
     setPropertyResult(null);
+    setAddingProperty(true);
     try {
       const created = await api.post<{ id: string; name: string }>('/admin-setup/properties', {
         clientId,
@@ -89,10 +96,14 @@ export function AddCompanyPage() {
       setZipCode('');
     } catch (err) {
       setPropertyError(err instanceof Error ? err.message : 'Failed to add property');
+    } finally {
+      setAddingProperty(false);
     }
   }
 
-  const inputClass = 'w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]';
+  const inputClass =
+    'w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm ' +
+    'transition-shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]';
   const labelClass = 'block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5';
 
   return (
@@ -115,6 +126,7 @@ export function AddCompanyPage() {
             <Building2 size={16} className="text-[var(--color-primary)]" />
             <span className="text-sm font-medium text-[var(--color-ink)]">Company Details</span>
           </div>
+
           <div>
             <label className={labelClass}>Company Name</label>
             <input
@@ -224,12 +236,9 @@ export function AddCompanyPage() {
               {companyResult}
             </div>
           )}
-          <button
-            type="submit"
-            className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white font-medium text-sm rounded-md py-2.5 transition-colors"
-          >
+          <Button type="submit" isLoading={creatingCompany} className="w-full">
             Create Company
-          </button>
+          </Button>
         </form>
       </div>
 
@@ -252,6 +261,7 @@ export function AddCompanyPage() {
             <MapPin size={16} className="text-[var(--color-primary)]" />
             <span className="text-sm font-medium text-[var(--color-ink)]">Property Location</span>
           </div>
+
           <div>
             <label className={labelClass}>Company</label>
             <select
@@ -306,12 +316,9 @@ export function AddCompanyPage() {
               {propertyResult}
             </div>
           )}
-          <button
-            type="submit"
-            className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white font-medium text-sm rounded-md py-2.5 transition-colors"
-          >
+          <Button type="submit" isLoading={addingProperty} className="w-full">
             Add Property
-          </button>
+          </Button>
         </form>
       </div>
     </div>

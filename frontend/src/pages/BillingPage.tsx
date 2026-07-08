@@ -4,6 +4,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { FileText } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
+import { Button } from '../components/Button';
 
 type SyncFailure = { id: string; billing_batch_id: string; error_message: string; failed_at: string };
 type BillingBatch = {
@@ -47,14 +48,14 @@ function StripeCheckoutForm({ onSuccess }: { onSuccess: () => void }) {
           {payError}
         </div>
       )}
-      <button
+      <Button
         onClick={handleConfirm}
-        disabled={!stripe || confirming}
-        className="w-full mt-3 bg-[var(--color-ink)] hover:bg-black text-white font-medium text-sm
-                   rounded-md py-2.5 transition-colors disabled:opacity-60"
+        disabled={!stripe}
+        isLoading={confirming}
+        className="w-full mt-3"
       >
         {confirming ? 'Processing…' : 'Confirm Payment'}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -97,12 +98,9 @@ function PaymentPanel({ billingBatchId }: { billingBatchId: string }) {
   return (
     <div className="mt-3">
       {!clientSecret && (
-        <button
-          onClick={startPayment}
-          className="text-sm font-medium text-[var(--color-primary)] hover:underline"
-        >
+        <Button variant="ghost" onClick={startPayment} className="!px-0 !py-0 !bg-transparent text-[var(--color-link)] hover:underline">
           Collect Payment
-        </button>
+        </Button>
       )}
       {error && (
         <div className="text-sm text-[var(--color-danger)] bg-[var(--color-danger-soft)] rounded-md px-3 py-2 mt-2">
@@ -259,13 +257,9 @@ export function BillingPage() {
           </div>
         )}
 
-        <button
-          type="submit"
-          className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)]
-                     text-white font-medium text-sm rounded-md py-2.5 transition-colors"
-        >
+        <Button type="submit" className="w-full">
           Create Consolidated Statement
-        </button>
+        </Button>
       </form>
 
       <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden mb-8">
@@ -311,12 +305,9 @@ export function BillingPage() {
                     </span>
                   </td>
                   <td className="py-2.5 pr-6">
-                    <button
-                      onClick={() => setCreatedBatchId(b.id)}
-                      className="text-xs font-medium text-[var(--color-primary)] hover:underline"
-                    >
+                    <Button variant="ghost" onClick={() => setCreatedBatchId(b.id)} className="!px-0 !py-0 !bg-transparent text-[var(--color-link)] hover:underline">
                       Open
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -335,13 +326,14 @@ export function BillingPage() {
           </p>
           <PaymentPanel billingBatchId={createdBatchId} />
 
-          <button
+          <Button
+            variant="ghost"
             onClick={() => syncToQuickBooks(createdBatchId)}
-            disabled={qboSyncing}
-            className="mt-4 text-sm font-medium text-[var(--color-primary)] hover:underline disabled:opacity-60"
+            isLoading={qboSyncing}
+            className="mt-4 !px-0 !py-0 !bg-transparent text-[var(--color-link)] hover:underline"
           >
-            {qboSyncing ? "Syncing to QuickBooks…" : "Sync to QuickBooks"}
-          </button>
+            {qboSyncing ? 'Syncing to QuickBooks…' : 'Sync to QuickBooks'}
+          </Button>
           {qboResult && (
             <div className="text-sm text-[var(--color-ink-soft)] bg-[var(--color-panel)] border border-[var(--color-concrete-light)] rounded-md px-3 py-2 mt-2">
               {qboResult}
@@ -365,12 +357,9 @@ export function BillingPage() {
                     </div>
                     <div className="text-[var(--color-danger)]">{f.error_message}</div>
                   </div>
-                  <button
-                    onClick={() => retryFailure(f.id)}
-                    className="text-xs font-medium text-[var(--color-primary)] hover:underline"
-                  >
+                  <Button variant="ghost" onClick={() => retryFailure(f.id)} className="!px-0 !py-0 !bg-transparent text-[var(--color-link)] hover:underline">
                     Retry
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Button } from '../components/Button';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -70,14 +71,9 @@ export function LoginPage() {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)]
-                       text-white font-medium text-sm rounded-md py-2.5 transition-colors disabled:opacity-60"
-          >
+          <Button type="submit" isLoading={loading} className="w-full">
             {loading ? 'Signing in…' : 'Sign in'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

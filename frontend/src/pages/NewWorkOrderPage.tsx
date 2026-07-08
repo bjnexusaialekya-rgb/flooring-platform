@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { FloorPlanDiagram } from '../components/FloorPlanDiagram';
+import { Button } from '../components/Button';
 
 type RoomSpec = { material_sku: string; net_qty: number; waste_pct: number };
 type Template = { id: string; plan_name: string; room_manifest: Record<string, RoomSpec> };
@@ -135,14 +136,9 @@ export function NewWorkOrderPage() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)]
-                     text-white font-medium text-sm rounded-md py-2.5 transition-colors disabled:opacity-60"
-        >
-          {submitting ? 'Submitting…' : 'Submit Work Order'}
-        </button>
+        <Button type="submit" isLoading={submitting} className="w-full">
+          Submit Work Order
+        </Button>
       </form>
     </div>
   );

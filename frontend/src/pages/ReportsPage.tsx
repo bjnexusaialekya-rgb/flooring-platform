@@ -3,25 +3,13 @@ import { TrendingUp, Building2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, MetricCard } from '../components/UIState';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { STATUS_LABELS, statusHex } from '../lib/statusColors';
 
 type ReportSummary = {
   statusCounts: { status: string; count: number }[];
   revenueThisMonth: number;
   topProperties: { name: string; work_order_count: number }[];
   pendingSyncFailures: number;
-};
-
-const CHART_COLORS = ['#6366f1', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#22c55e'];
-
-
-const STATUS_LABELS: Record<string, string> = {
-  pending_review: 'Submitted',
-  priced: 'Priced',
-  approved: 'Approved',
-  scheduled: 'Scheduled',
-  completed: 'Completed',
-  billing_approved: 'Billing',
-  invoiced: 'Invoiced',
 };
 
 function DashboardSkeleton() {
@@ -48,6 +36,21 @@ function DashboardSkeleton() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// Themed tooltip: inherits the app's fonts/colors instead of Recharts defaults.
+function ChartTooltip({ active, payload }: any) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className="bg-[var(--color-panel)] border border-[var(--color-concrete-light)] rounded-md shadow-lg px-3 py-2">
+      <p className="text-xs text-[var(--color-concrete)] uppercase tracking-wide mb-0.5">
+        {payload[0].payload.name}
+      </p>
+      <p className="font-[var(--font-mono)] text-sm font-semibold text-[var(--color-ink)]">
+        {payload[0].value}
+      </p>
     </div>
   );
 }
@@ -105,17 +108,21 @@ export function ReportsPage() {
               ) : (
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart
-                    data={data.statusCounts.map((s) => ({ name: STATUS_LABELS[s.status] ?? s.status, count: s.count }))}
+                    data={data.statusCounts.map((s) => ({
+                      name: STATUS_LABELS[s.status] ?? s.status,
+                      count: s.count,
+                      status: s.status,
+                    }))}
                     layout="vertical"
                     margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
                     <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={90} />
-                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper)' }} />
                     <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                      {data.statusCounts.map((_, i) => (
-                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      {data.statusCounts.map((s, i) => (
+                        <Cell key={i} fill={statusHex(s.status)} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -143,8 +150,8 @@ export function ReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
                     <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={110} />
-                    <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                    <Bar dataKey="count" fill="#14b8a6" radius={[0, 4, 4, 0]} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper)' }} />
+                    <Bar dataKey="count" fill="var(--color-plum)" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}

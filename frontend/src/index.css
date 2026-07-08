@@ -37,6 +37,11 @@
   --color-primary-soft: #e9e9fa;
   --color-primary-dark: #4245a0;
 
+  /* Link — small distinct token for inline text links (table row links,
+     "Open"/"Retry"/"Sync" style triggers), separate from --color-primary
+     so link color can be tuned independently of solid button fills. */
+  --color-link: #4548a8;
+
   /* Secondary accent — cyan-leaning teal, used for second-tier
      interactive moments. Distinct enough from the primary indigo to
      avoid a one-note look, and shifted more cyan than the blue-teal
@@ -89,6 +94,13 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-body);
+}
+
+/* Tighter tracking on display headings — Space Grotesk reads slightly
+   loose at heading sizes by default; -0.03em brings it to a more
+   "premium SaaS" register consistent with the rest of the palette. */
+h1, h2, .font-display {
+  letter-spacing: -0.03em;
 }
 
 /* Reusable "cut line" — the literal rendering of the pricing-blind

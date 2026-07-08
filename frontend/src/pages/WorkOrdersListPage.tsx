@@ -7,6 +7,8 @@ import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { KebabMenu } from '../components/KebabMenu';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { FilterChip } from '../components/FilterChip';
+import { Button } from '../components/Button';
+import { STATUS_LABELS, statusPillClass } from '../lib/statusColors';
 
 type WorkOrderSummary = {
   id: string;
@@ -17,16 +19,6 @@ type WorkOrderSummary = {
 };
 
 type SortKey = 'po_number' | 'target_turn_date' | 'created_at';
-
-const STATUS_STYLES: Record<string, string> = {
-  pending_review: 'bg-[var(--color-status-submitted-soft)] text-[var(--color-status-submitted)]',
-  priced: 'bg-[var(--color-status-priced-soft)] text-[var(--color-status-priced)]',
-  approved: 'bg-[var(--color-status-approved-soft)] text-[var(--color-status-approved)]',
-  scheduled: 'bg-[var(--color-status-scheduled-soft)] text-[var(--color-status-scheduled)]',
-  completed: 'bg-[var(--color-status-completed-soft)] text-[var(--color-status-completed)]',
-  billing_approved: 'bg-[var(--color-status-billing-soft)] text-[var(--color-status-billing)]',
-  invoiced: 'bg-[var(--color-status-invoiced-soft)] text-[var(--color-status-invoiced)]',
-};
 
 // Mirrors the transition map used on the detail page's "Advance" button,
 // so bulk-advancing here follows the exact same allowed workflow.
@@ -42,9 +34,8 @@ const NEXT_STATUS: Record<string, string> = {
 const CLOSED_STATUSES = ['completed', 'billing_approved', 'invoiced'];
 
 function StatusPill({ status }: { status: string }) {
-  const style = STATUS_STYLES[status] ?? 'bg-[var(--color-concrete-light)] text-[var(--color-ink-soft)]';
   return (
-    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium capitalize ${style}`}>
+    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusPillClass(status)}`}>
       {status.replace(/_/g, ' ')}
     </span>
   );
@@ -238,10 +229,10 @@ export function WorkOrdersListPage() {
           />
           <div className="flex items-center gap-2 flex-wrap">
             <FilterChip label="All statuses" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
-            {Object.keys(STATUS_STYLES).map((s) => (
+            {Object.keys(STATUS_LABELS).map((s) => (
               <FilterChip
                 key={s}
-                label={s.replace(/_/g, ' ')}
+                label={STATUS_LABELS[s]}
                 active={statusFilter === s}
                 onClick={() => setStatusFilter(s)}
               />
@@ -259,14 +250,13 @@ export function WorkOrdersListPage() {
             {selected.size} selected
           </span>
           <div className="flex items-center gap-3">
-            <button
+            <Button
               onClick={() => setConfirmOpen(true)}
-              disabled={bulkUpdating}
-              className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white
-                         text-xs font-medium px-3 py-1.5 rounded-md transition-colors disabled:opacity-60"
+              isLoading={bulkUpdating}
+              className="!text-xs !px-3 !py-1.5"
             >
               {bulkUpdating ? 'Updating…' : 'Advance to next stage'}
-            </button>
+            </Button>
             <button
               onClick={() => setSelected(new Set())}
               className="text-[var(--color-primary)] hover:opacity-70"
@@ -347,7 +337,7 @@ export function WorkOrdersListPage() {
                       </td>
                     )}
                     <td className="px-5 py-4 font-mono text-xs">
-                      <Link to={`/work-orders/${wo.id}`} className="text-[var(--color-primary)] hover:underline">
+                      <Link to={`/work-orders/${wo.id}`} className="text-[var(--color-link)] hover:underline">
                         {wo.po_number ?? wo.id.slice(0, 8)}
                       </Link>
                     </td>
@@ -379,7 +369,7 @@ export function WorkOrdersListPage() {
           </table>
         )}
       </div>
-          <ConfirmDialog
+      <ConfirmDialog
         isOpen={confirmOpen}
         title="Advance selected work orders?"
         message={`This will move ${selected.size} work order${selected.size === 1 ? '' : 's'} to the next stage. This cannot be undone automatically.`}
