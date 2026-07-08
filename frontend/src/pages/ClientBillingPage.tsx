@@ -4,6 +4,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { Receipt } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
+import { Button } from '../components/Button';
 
 type Statement = {
   id: string;
@@ -46,13 +47,14 @@ function CheckoutForm({ onSuccess }: { onSuccess: () => void }) {
           {payError}
         </div>
       )}
-      <button
+      <Button
         onClick={handleConfirm}
-        disabled={!stripe || confirming}
-        className="w-full mt-3 bg-[var(--color-ink)] hover:bg-black text-white font-medium text-sm rounded-md py-2.5 transition-colors disabled:opacity-60"
+        disabled={!stripe}
+        isLoading={confirming}
+        className="w-full mt-3"
       >
         {confirming ? 'Processing…' : 'Confirm Payment'}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -151,12 +153,13 @@ export function ClientBillingPage() {
                   </td>
                   <td className="px-5 py-3.5">
                     {!paidIds.has(s.id) && stripePromise && (
-                      <button
+                      <Button
+                        variant="ghost"
                         onClick={() => startPayment(s.id)}
-                        className="text-xs font-medium text-[var(--color-primary)] hover:underline"
+                        className="!text-xs !px-2 !py-1 !text-[var(--color-primary)] !bg-transparent hover:!bg-transparent hover:!underline"
                       >
                         Pay Now
-                      </button>
+                      </Button>
                     )}
                   </td>
                 </tr>

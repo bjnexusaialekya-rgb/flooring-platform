@@ -15,30 +15,61 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof ClipboardList }[]> = {
+type NavItem = { to: string; label: string; icon: typeof ClipboardList };
+type NavGroup = { group: string | null; items: NavItem[] };
+
+const NAV_BY_ROLE: Record<string, NavGroup[]> = {
   client: [
-    { to: '/work-orders', label: 'Work Orders', icon: ClipboardList },
-    { to: '/work-orders/new', label: 'Submit New Order', icon: PlusCircle },
-    { to: '/my-billing', label: 'Billing', icon: Receipt },
+    {
+      group: null,
+      items: [
+        { to: '/work-orders', label: 'Work Orders', icon: ClipboardList },
+        { to: '/work-orders/new', label: 'Submit New Order', icon: PlusCircle },
+        { to: '/my-billing', label: 'Billing', icon: Receipt },
+      ],
+    },
   ],
   staff: [
-    { to: '/work-orders', label: 'Work Order Queue', icon: ClipboardList },
-    { to: '/project-trackers', label: 'Project Trackers', icon: FolderKanban },
-    { to: '/inventory', label: 'Inventory', icon: Boxes },
-    { to: '/purchase-orders', label: 'Purchase Orders', icon: Truck },
-    { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
+    {
+      group: 'Operations',
+      items: [
+        { to: '/work-orders', label: 'Work Order Queue', icon: ClipboardList },
+        { to: '/project-trackers', label: 'Project Trackers', icon: FolderKanban },
+        { to: '/inventory', label: 'Inventory', icon: Boxes },
+        { to: '/purchase-orders', label: 'Purchase Orders', icon: Truck },
+        { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
+      ],
+    },
   ],
   admin: [
-    { to: '/reports', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/work-orders', label: 'Work Order Queue', icon: ClipboardList },
-    { to: '/project-trackers', label: 'Project Trackers', icon: FolderKanban },
-    { to: '/inventory', label: 'Inventory', icon: Boxes },
-    { to: '/purchase-orders', label: 'Purchase Orders', icon: Truck },
-    { to: '/billing', label: 'Billing', icon: Receipt },
-    { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
-    { to: '/add-client', label: 'Add Login', icon: UserPlus },
-    { to: '/add-company', label: 'Add Company', icon: Building2 },
-    { to: '/admin-payments', label: 'Payments', icon: CreditCard },
+    {
+      group: 'Overview',
+      items: [{ to: '/reports', label: 'Dashboard', icon: LayoutDashboard }],
+    },
+    {
+      group: 'Operations',
+      items: [
+        { to: '/work-orders', label: 'Work Order Queue', icon: ClipboardList },
+        { to: '/project-trackers', label: 'Project Trackers', icon: FolderKanban },
+        { to: '/inventory', label: 'Inventory', icon: Boxes },
+        { to: '/purchase-orders', label: 'Purchase Orders', icon: Truck },
+        { to: '/templates/import', label: 'Import Templates', icon: UploadCloud },
+      ],
+    },
+    {
+      group: 'Finance',
+      items: [
+        { to: '/billing', label: 'Billing', icon: Receipt },
+        { to: '/admin-payments', label: 'Payments', icon: CreditCard },
+      ],
+    },
+    {
+      group: 'Admin',
+      items: [
+        { to: '/add-client', label: 'Add Login', icon: UserPlus },
+        { to: '/add-company', label: 'Add Company', icon: Building2 },
+      ],
+    },
   ],
 };
 
@@ -46,7 +77,7 @@ export function AppShell() {
   const { user, logout } = useAuth();
   if (!user) return null;
 
-  const navItems = NAV_BY_ROLE[user.role] ?? [];
+  const navGroups = NAV_BY_ROLE[user.role] ?? [];
 
   return (
     <div className="min-h-screen flex bg-[var(--color-paper)]">
@@ -60,26 +91,39 @@ export function AppShell() {
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/work-orders'}
-                className={({ isActive }) =>
-                  [
-                    'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                    isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white',
-                  ].join(' ')
-                }
-              >
-                <Icon size={16} strokeWidth={2} />
-                {item.label}
-              </NavLink>
-            );
-          })}
+        <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+          {navGroups.map((section, gi) => (
+            <div key={section.group ?? gi}>
+              {section.group && (
+                <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/35">
+                  {section.group}
+                </div>
+              )}
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.to === '/work-orders'}
+                      className={({ isActive }) =>
+                        [
+                          'relative flex items-center gap-2.5 pl-3 pr-3 py-2 rounded-md text-sm transition-colors',
+                          isActive
+                            ? 'bg-white/[0.08] text-white font-semibold before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-full before:bg-[var(--color-amber)]'
+                            : 'text-white/60 font-medium hover:bg-white/5 hover:text-white/90',
+                        ].join(' ')
+                      }
+                    >
+                      <Icon size={16} strokeWidth={2} />
+                      {item.label}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         <div className="px-5 py-4 border-t border-white/10">

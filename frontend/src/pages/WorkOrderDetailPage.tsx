@@ -5,6 +5,7 @@ import { api, ApiRequestError, type WorkOrderPortalView } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { StatusPipeline } from '../components/StatusPipeline';
 import { EmptyState, TableSkeleton } from '../components/UIState';
+import { Button } from '../components/Button';
 
 type StockShortage = {
   materialId: string;
@@ -201,14 +202,13 @@ export function WorkOrderDetailPage() {
             </div>
           )}
           {isStaff && NEXT_STATUS[order.status] && (
-            <button
+            <Button
               onClick={() => advanceStatus(false)}
-              disabled={advancing}
-              className="bg-[var(--color-ink)] hover:bg-black text-white text-xs font-medium
-                         rounded-md px-4 py-2 transition-colors disabled:opacity-60"
+              isLoading={advancing}
+              className="!text-xs"
             >
               {advancing ? 'Updating…' : `Advance to "${NEXT_STATUS[order.status].replace('_', ' ')}"`}
-            </button>
+            </Button>
           )}
         </div>
         {stockShortages && stockShortages.length > 0 && (
@@ -224,20 +224,21 @@ export function WorkOrderDetailPage() {
               ))}
             </ul>
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="destructive"
                 onClick={() => advanceStatus(true)}
-                disabled={advancing}
-                className="bg-[var(--color-danger)] hover:opacity-90 text-white text-xs font-medium
-                           rounded-md px-3 py-1.5 transition-colors disabled:opacity-60"
+                isLoading={advancing}
+                className="!text-xs !px-3 !py-1.5"
               >
                 {advancing ? 'Updating…' : 'Proceed anyway'}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => setStockShortages(null)}
-                className="text-xs font-medium text-[var(--color-concrete)] px-3 py-1.5"
+                className="!text-xs !px-3 !py-1.5 !text-[var(--color-concrete)]"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -324,13 +325,14 @@ export function WorkOrderDetailPage() {
                         {li.internal_cost_basis ?? '—'}
                       </td>
                       <td className="py-2.5 pr-6">
-                        <button
+                        <Button
+                          variant="ghost"
                           onClick={() => savePrice(li.id)}
-                          disabled={saving === li.id}
-                          className="text-xs font-medium text-[var(--color-amber-dark)] hover:underline disabled:opacity-50"
+                          isLoading={saving === li.id}
+                          className="!text-xs !px-2 !py-1 !text-[var(--color-amber-dark)] !bg-transparent hover:!bg-[var(--color-amber)]/10"
                         >
                           {saving === li.id ? 'Saving…' : 'Save'}
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}

@@ -4,6 +4,7 @@ import { api, ApiRequestError, type PurchaseOrderListItem, type PurchaseOrderDet
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { KebabMenu } from '../components/KebabMenu';
 import { FilterChip } from '../components/FilterChip';
+import { Button } from '../components/Button';
 
 const VALID_NEXT: Record<string, string[]> = {
   draft: ['submitted', 'cancelled'],
@@ -158,12 +159,13 @@ export function PurchaseOrdersPage() {
               className="text-xs px-2 py-1.5 rounded-md border border-[var(--color-concrete-light)] bg-white w-24 font-mono"
             />
           </div>
-          <button
+          <Button
+            variant="secondary"
             onClick={addDraftLine}
-            className="text-xs font-medium text-[var(--color-ink)] border border-[var(--color-concrete-light)] rounded-md px-3 py-1.5 hover:bg-[var(--color-concrete-light)]/30"
+            className="!text-xs !px-3 !py-1.5"
           >
             Add line
-          </button>
+          </Button>
         </div>
 
         {draftLines.length > 0 && (
@@ -189,13 +191,14 @@ export function PurchaseOrdersPage() {
           </table>
         )}
 
-        <button
+        <Button
           onClick={submitNewPO}
-          disabled={creating || draftLines.length === 0}
-          className="bg-[var(--color-ink)] hover:bg-black text-white text-xs font-medium rounded-md px-4 py-2 transition-colors disabled:opacity-60"
+          disabled={draftLines.length === 0}
+          isLoading={creating}
+          className="!text-xs !px-4 !py-2"
         >
           {creating ? 'Creating…' : 'Create Purchase Order'}
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
@@ -283,21 +286,28 @@ export function PurchaseOrdersPage() {
                 </tbody>
               </table>
               <div className="flex gap-2">
-                {VALID_NEXT[selected.status]?.map((next) => (
-                  <button
-                    key={next}
-                    onClick={() => transition(selected.id, next)}
-                    disabled={transitioning}
-                    className={[
-                      'text-xs font-medium rounded-md px-3 py-1.5 transition-colors disabled:opacity-60',
-                      next === 'cancelled'
-                        ? 'text-[var(--color-danger)] border border-[var(--color-danger)]'
-                        : 'bg-[var(--color-ink)] hover:bg-black text-white',
-                    ].join(' ')}
-                  >
-                    {transitioning ? 'Updating…' : `Mark as ${next}`}
-                  </button>
-                ))}
+                {VALID_NEXT[selected.status]?.map((next) =>
+                  next === 'cancelled' ? (
+                    <Button
+                      key={next}
+                      variant="ghost"
+                      onClick={() => transition(selected.id, next)}
+                      isLoading={transitioning}
+                      className="!text-xs !px-3 !py-1.5 !text-[var(--color-danger)] !border !border-[var(--color-danger)] !bg-transparent hover:!bg-[var(--color-danger-soft)]"
+                    >
+                      {transitioning ? 'Updating…' : `Mark as ${next}`}
+                    </Button>
+                  ) : (
+                    <Button
+                      key={next}
+                      onClick={() => transition(selected.id, next)}
+                      isLoading={transitioning}
+                      className="!text-xs !px-3 !py-1.5"
+                    >
+                      {transitioning ? 'Updating…' : `Mark as ${next}`}
+                    </Button>
+                  )
+                )}
               </div>
             </div>
           )}

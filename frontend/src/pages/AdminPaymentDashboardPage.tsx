@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Receipt } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
+import { Button } from '../components/Button';
 
 type PaymentStatusRow = {
   corporate_name: string;
@@ -118,13 +119,13 @@ export function AdminPaymentDashboardPage() {
                 ⚠️ Advance payment of ${Number(a.advance_amount).toFixed(2)} is due from{' '}
                 <strong>{a.corporate_name}</strong> before work begins.
               </span>
-              <button
+              <Button
                 onClick={() => handleClearAdvance(a.id)}
-                disabled={clearingId === a.id}
-                className="text-xs font-medium bg-[var(--color-ink)] hover:bg-black text-white rounded-md px-3 py-1.5 disabled:opacity-60"
+                isLoading={clearingId === a.id}
+                className="!text-xs !px-3 !py-1.5"
               >
                 {clearingId === a.id ? 'Clearing…' : 'Mark Cleared'}
-              </button>
+              </Button>
             </div>
           ))}
         </div>

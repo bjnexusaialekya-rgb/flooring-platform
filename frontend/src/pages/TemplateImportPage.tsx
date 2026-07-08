@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { UploadCloud, Download, CheckCircle2, XCircle } from 'lucide-react';
 import { api, type TemplateImportResponse } from '../lib/api';
+import { Button } from '../components/Button';
 
 export function TemplateImportPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -57,13 +58,14 @@ export function TemplateImportPage() {
         name are grouped into a single template.
       </p>
 
-      <button
+      <Button
+        variant="ghost"
         onClick={handleDownloadSample}
-        className="inline-flex items-center gap-1.5 text-sm text-[var(--color-primary)] hover:underline mb-6"
+        className="!px-0 !py-0 !text-[var(--color-primary)] !bg-transparent hover:!bg-transparent hover:!underline mb-6"
       >
         <Download size={14} />
         Download sample CSV
-      </button>
+      </Button>
 
       <div
         className="bg-[var(--color-panel)] rounded-xl border surface-card-2 border-dashed border-[var(--color-concrete-light)] px-6 py-10 flex flex-col items-center text-center cursor-pointer hover:border-[var(--color-primary)] transition-colors"
