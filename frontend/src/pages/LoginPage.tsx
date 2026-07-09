@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useRef, useLayoutEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarClock, ClipboardList, Eye, EyeOff, Lock, Mail, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -6,6 +6,12 @@ import { useToast } from '../components/Toast';
 import { Button } from '../components/Button';
 
 export function LoginPage() {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    panelRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   const { login } = useAuth();
   const navigate = useNavigate();
   const { showInfo } = useToast();
@@ -36,8 +42,8 @@ export function LoginPage() {
   }
 
   return (
-    <main className="trestle-photo-login min-h-screen bg-white text-[var(--color-ink)]">
-      <section className="trestle-photo-login__shell min-h-screen">
+    <main className="trestle-photo-login bg-white text-[var(--color-ink)]">
+      <section className="trestle-photo-login__shell">
         <aside className="trestle-photo-login__hero" aria-hidden="true">
           <img src="/auth-hero.jpg" alt="" className="trestle-photo-login__hero-img" />
           <div className="trestle-photo-login__hero-scrim" />
@@ -89,7 +95,7 @@ export function LoginPage() {
           </ul>
         </aside>
 
-        <section className="trestle-photo-login__form-panel">
+        <section ref={panelRef} className="trestle-photo-login__form-panel">
           <form onSubmit={handleSubmit} noValidate className="trestle-photo-login__card">
             <div className="mb-8">
               <h2 className="mt-0 font-[var(--font-display)] text-[34px] font-bold leading-tight tracking-[-0.055em] text-[var(--color-ink)] sm:text-[38px]">

@@ -156,6 +156,7 @@
 }
 
 body {
+  overflow: hidden;
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-body);
@@ -321,14 +322,18 @@ input, select, textarea {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(430px, 520px);
   width: 100%;
+  height: 100dvh;
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
   background: #fff;
   overflow-x: hidden;
 }
 
 .trestle-photo-login__hero {
   position: relative;
-  min-height: 100vh;
+  height: 100%;
   overflow: hidden;
+  min-height: 0;
   background: #05070a;
   display: flex;
   flex-direction: column;
@@ -343,7 +348,7 @@ input, select, textarea {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
+  object-position: center center;
   display: block;
   z-index: 0;
 }
@@ -459,11 +464,13 @@ input, select, textarea {
   position: relative;
   z-index: 2;
   display: flex;
-  min-height: 100vh;
+  height: 100%;
+  overflow-y: auto;
+  min-height: 0;
   flex-direction: column;
-  justify-content: center;
-  padding: 48px 56px 40px 48px;
-  background: #eef0f4;
+  justify-content: flex-start;
+  padding: 64px 56px 40px 48px;
+  background: linear-gradient(180deg, #eaf1fb 0%, #ffffff 100%);
 }
 
 .trestle-photo-login__card {
