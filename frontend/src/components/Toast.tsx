@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
-import { CheckCircle2, XCircle, X } from 'lucide-react';
+import { CheckCircle2, XCircle, Info, X } from 'lucide-react';
 
-type ToastTone = 'success' | 'error';
+type ToastTone = 'success' | 'error' | 'info';
 
 interface Toast {
   id: number;
@@ -17,6 +17,9 @@ interface ToastContextValue {
    *  inline banners for persistent, page-level failures (e.g. "couldn't
    *  load data") — use this for one-off action failures instead. */
   showError: (message: string) => void;
+  /** Neutral guidance, e.g. "contact your admin to reset your password" —
+   *  not a success or failure, just information the person needs. */
+  showInfo: (message: string) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -45,9 +48,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const showSuccess = useCallback((message: string) => push(message, 'success'), [push]);
   const showError = useCallback((message: string) => push(message, 'error'), [push]);
+  const showInfo = useCallback((message: string) => push(message, 'info'), [push]);
 
   return (
-    <ToastContext.Provider value={{ showSuccess, showError }}>
+    <ToastContext.Provider value={{ showSuccess, showError, showInfo }}>
       {children}
       <div
         className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none"
@@ -63,14 +67,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             } ${
               t.tone === 'success'
                 ? 'border-[var(--color-success)]/30'
-                : 'border-[var(--color-danger)]/30'
+                : t.tone === 'error'
+                ? 'border-[var(--color-danger)]/30'
+                : 'border-[var(--color-primary)]/30'
             }`}
             style={{ boxShadow: 'var(--elevation-2)' }}
           >
             {t.tone === 'success' ? (
               <CheckCircle2 size={18} className="text-[var(--color-success)] mt-0.5 shrink-0" />
-            ) : (
+            ) : t.tone === 'error' ? (
               <XCircle size={18} className="text-[var(--color-danger)] mt-0.5 shrink-0" />
+            ) : (
+              <Info size={18} className="text-[var(--color-primary)] mt-0.5 shrink-0" />
             )}
             <p className="text-sm text-[var(--color-ink)] flex-1 leading-snug">{t.message}</p>
             <button

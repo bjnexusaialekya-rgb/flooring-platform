@@ -81,13 +81,78 @@
   --color-danger-soft: #f8e5e3;
 }
 
-/* Premium gradient — indigo/teal, cool-toned to match the new palette
-   without going pure navy-black. */
-.auth-gradient-bg {
+/* ============================================================
+   AUTH SHOWCASE BACKGROUND — teal-to-green gloss gradient with a
+   diagonal light streak and grain, standing in for a polished
+   floor surface. Deliberately not a photograph: reproducing a
+   real product/stock floor photo here would mean using an asset
+   we have no license for, so the "floor" cue instead comes from
+   a faint plank-line texture blended under the gloss.
+   ============================================================ */
+.auth-showcase {
+  position: relative;
+  overflow: hidden;
   background:
-    radial-gradient(circle at 25% 15%, #4245a0 0%, transparent 45%),
-    radial-gradient(circle at 80% 75%, #0a6b78 0%, transparent 50%),
-    #171a22;
+    radial-gradient(120% 90% at 12% 8%, #1c6b74 0%, transparent 55%),
+    radial-gradient(140% 110% at 88% 102%, #59c98a 0%, transparent 60%),
+    linear-gradient(160deg, #0b2f38 0%, #0e4a4a 32%, #157a5e 62%, #2fae72 100%);
+}
+
+.auth-showcase::before {
+  /* diagonal gloss streak, the bright diagonal band in the reference */
+  content: '';
+  position: absolute;
+  inset: -15% -25%;
+  background: linear-gradient(
+    108deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.24) 44%,
+    rgba(255, 255, 255, 0.07) 53%,
+    transparent 64%
+  );
+  transform: rotate(-3deg);
+  pointer-events: none;
+}
+
+.auth-showcase::after {
+  /* faint plank-line texture standing in for a photographed floor */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    102deg,
+    rgba(255, 255, 255, 0.04) 0px,
+    rgba(255, 255, 255, 0.04) 2px,
+    transparent 2px,
+    transparent 86px
+  );
+  pointer-events: none;
+}
+
+.auth-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
+}
+
+/* Layered "floating card" backing — a soft offset panel peeking out from
+   behind the white form card, the same double-card depth cue as the
+   reference composite. */
+.auth-card-frame {
+  position: relative;
+}
+.auth-card-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(111, 209, 154, 0.22));
+  transform: translate(10px, 12px);
+  z-index: 0;
 }
 
 body {
