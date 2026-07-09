@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { CalendarClock, ClipboardList, Eye, EyeOff, Lock, Mail, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { Button } from '../components/Button';
@@ -39,20 +39,44 @@ export function LoginPage() {
     <main className="trestle-photo-login min-h-screen bg-white text-[var(--color-ink)]">
       <section className="trestle-photo-login__shell min-h-screen">
         <aside className="trestle-photo-login__hero" aria-hidden="true">
-          <img
-            src="/auth-hero.jpg"
-            alt="Trestle — Run every job. Finish with confidence. Trestle helps flooring contractors and property teams manage work orders, schedules, vendors, and installs across every property."
-            className="trestle-photo-login__hero-img"
-          />
+          <img src="/auth-hero.jpg" alt="" className="trestle-photo-login__hero-img" />
+          <div className="trestle-photo-login__hero-scrim" />
+
+          <div className="trestle-photo-login__hero-content">
+            <div className="trestle-photo-login__hero-logo">
+              Trestle<span>.</span>
+            </div>
+            <div className="trestle-photo-login__hero-eyebrow">Built for flooring pros</div>
+            <h1 className="trestle-photo-login__hero-headline">
+              Run every job.
+              <br />
+              Finish with confidence.
+            </h1>
+            <p className="trestle-photo-login__hero-body">
+              Trestle helps flooring contractors and property teams manage work orders, schedules, vendors, and
+              installs across every property.
+            </p>
+          </div>
+
+          <ul className="trestle-photo-login__hero-features">
+            <li>
+              <ClipboardList size={18} strokeWidth={2.2} />
+              Work orders tracked start to finish
+            </li>
+            <li>
+              <CalendarClock size={18} strokeWidth={2.2} />
+              Scheduling across crews and sites
+            </li>
+            <li>
+              <TrendingUp size={18} strokeWidth={2.2} />
+              Real-time job and vendor analytics
+            </li>
+          </ul>
         </aside>
 
         <section className="trestle-photo-login__form-panel">
           <form onSubmit={handleSubmit} noValidate className="trestle-photo-login__card">
             <div className="mb-8">
-              <div className="font-[var(--font-display)] text-[44px] font-bold leading-none tracking-[-0.06em] text-[var(--color-ink)] sm:hidden">
-                Trestle<span className="text-[var(--color-amber)]">.</span>
-              </div>
-
               <h2 className="mt-0 font-[var(--font-display)] text-[34px] font-bold leading-tight tracking-[-0.055em] text-[var(--color-ink)] sm:text-[38px]">
                 Welcome back
               </h2>
