@@ -314,14 +314,15 @@ input, select, textarea {
 /* --- Trestle photo login (clean cover photo + real HTML text overlay) --- */
 .trestle-photo-login {
   --photo-login-card-width: 640px;
+  width: 100%;
 }
 
 .trestle-photo-login__shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(430px, 520px);
+  width: 100%;
   background: #fff;
   overflow-x: hidden;
-  max-width: 100vw;
 }
 
 .trestle-photo-login__hero {
