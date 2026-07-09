@@ -310,3 +310,152 @@ input, select, textarea {
     animation: none;
   }
 }
+
+/* --- Trestle photo login (hero image has text baked in) --- */
+.trestle-photo-login {
+  --photo-login-card-width: 640px;
+}
+
+.trestle-photo-login__shell {
+  display: grid;
+  grid-template-columns: minmax(0, 66.5%) minmax(430px, 33.5%);
+  background: #fff;
+}
+
+.trestle-photo-login__hero {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #05070a;
+}
+
+.trestle-photo-login__hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.trestle-photo-login__form-panel {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 56px 40px 0;
+  background: linear-gradient(90deg, #ffffff 0%, #fbfcff 100%);
+}
+
+.trestle-photo-login__card {
+  width: min(var(--photo-login-card-width), calc(100vw - 48px));
+  margin-left: -120px;
+  border-radius: 20px;
+  background: var(--color-panel);
+  padding: 52px 58px 46px;
+  box-shadow:
+    0 1px 2px rgba(31, 36, 48, 0.05),
+    0 18px 46px rgba(31, 36, 48, 0.14),
+    0 34px 86px rgba(31, 36, 48, 0.16);
+  animation:
+    backdrop-fade-in 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    dialog-scale-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.trestle-photo-login__input-wrap {
+  display: flex;
+  height: 58px;
+  align-items: center;
+  gap: 14px;
+  border-radius: 8px;
+  border: 1px solid #cfd6e2;
+  background: #ffffff;
+  padding: 0 18px;
+  box-shadow: 0 1px 1px rgba(31, 36, 48, 0.03);
+  transition:
+    border-color 160ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.trestle-photo-login__input-wrap:focus-within {
+  border-color: var(--color-primary);
+  box-shadow:
+    0 0 0 4px rgba(91, 95, 199, 0.14),
+    0 1px 2px rgba(31, 36, 48, 0.05);
+}
+
+.trestle-photo-login__input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-ink);
+  outline: none;
+}
+
+.trestle-photo-login__input::placeholder {
+  color: #7f8797;
+}
+
+.trestle-photo-login__footer {
+  margin-top: 48px;
+  margin-left: -120px;
+  display: flex;
+  width: min(var(--photo-login-card-width), calc(100vw - 48px));
+  justify-content: center;
+  gap: 34px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-ink-soft);
+}
+
+@media (max-width: 1180px) {
+  .trestle-photo-login__shell {
+    grid-template-columns: minmax(0, 59%) minmax(400px, 41%);
+  }
+
+  .trestle-photo-login__card,
+  .trestle-photo-login__footer {
+    margin-left: -84px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .trestle-photo-login__shell {
+    display: block;
+  }
+
+  .trestle-photo-login__hero {
+    min-height: 260px;
+    height: 260px;
+  }
+
+  .trestle-photo-login__form-panel {
+    min-height: auto;
+    padding: 32px 20px 28px;
+    background: #fff;
+  }
+
+  .trestle-photo-login__card,
+  .trestle-photo-login__footer {
+    width: min(100%, 640px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .trestle-photo-login__card {
+    padding: 36px 26px 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trestle-photo-login__card {
+    animation: none;
+  }
+}
