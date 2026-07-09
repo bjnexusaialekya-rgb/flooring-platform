@@ -320,6 +320,8 @@ input, select, textarea {
   display: grid;
   grid-template-columns: minmax(0, 66.5%) minmax(430px, 33.5%);
   background: #fff;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 .trestle-photo-login__hero {
@@ -334,7 +336,7 @@ input, select, textarea {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   display: block;
 }
@@ -351,7 +353,7 @@ input, select, textarea {
 }
 
 .trestle-photo-login__card {
-  width: min(var(--photo-login-card-width), calc(100vw - 48px));
+  width: min(var(--photo-login-card-width), calc(100% - 48px));
   margin-left: -120px;
   border-radius: 20px;
   background: var(--color-panel);
@@ -407,7 +409,7 @@ input, select, textarea {
   margin-top: 48px;
   margin-left: -120px;
   display: flex;
-  width: min(var(--photo-login-card-width), calc(100vw - 48px));
+  width: min(var(--photo-login-card-width), calc(100% - 48px));
   justify-content: center;
   gap: 34px;
   font-size: 16px;
