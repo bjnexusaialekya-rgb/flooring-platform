@@ -60,16 +60,31 @@ export function LoginPage() {
 
           <ul className="trestle-photo-login__hero-features">
             <li>
-              <ClipboardList size={18} strokeWidth={2.2} />
-              Work orders tracked start to finish
+              <span className="trestle-photo-login__hero-feature-icon">
+                <ClipboardList size={20} strokeWidth={2.2} />
+              </span>
+              <span className="trestle-photo-login__hero-feature-text">
+                <span className="trestle-photo-login__hero-feature-title">Manage Work Orders</span>
+                <span className="trestle-photo-login__hero-feature-desc">Create, assign, and track every flooring job.</span>
+              </span>
             </li>
             <li>
-              <CalendarClock size={18} strokeWidth={2.2} />
-              Scheduling across crews and sites
+              <span className="trestle-photo-login__hero-feature-icon">
+                <CalendarClock size={20} strokeWidth={2.2} />
+              </span>
+              <span className="trestle-photo-login__hero-feature-text">
+                <span className="trestle-photo-login__hero-feature-title">Stay on Schedule</span>
+                <span className="trestle-photo-login__hero-feature-desc">Real-time updates keep every install on track.</span>
+              </span>
             </li>
             <li>
-              <TrendingUp size={18} strokeWidth={2.2} />
-              Real-time job and vendor analytics
+              <span className="trestle-photo-login__hero-feature-icon">
+                <TrendingUp size={20} strokeWidth={2.2} />
+              </span>
+              <span className="trestle-photo-login__hero-feature-text">
+                <span className="trestle-photo-login__hero-feature-title">See the Big Picture</span>
+                <span className="trestle-photo-login__hero-feature-desc">Portfolio insights that help you plan ahead.</span>
+              </span>
             </li>
           </ul>
         </aside>
