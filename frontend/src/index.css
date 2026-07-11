@@ -37,9 +37,9 @@
   --color-paper: #f0f5e1;
   --color-canvas: #fafaf7;
   --gradient-canvas: linear-gradient(90deg, #f7f6dd 0%, #e7f6ef 100%);
-  --color-panel: #f3f3db;
+  --color-panel: #fcfcf9;
   --color-concrete: #6f7660;
-  --color-concrete-light: #dde1c9;
+  --color-concrete-light: #c7cdb0;
 
   /* Primary — the CTA gradient's darker (contrast-safe) stop, so solid
      buttons/links/focus rings read as one consistent brand color even
