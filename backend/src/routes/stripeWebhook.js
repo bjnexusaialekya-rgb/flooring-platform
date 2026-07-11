@@ -112,6 +112,18 @@ router.post(
       }
 
       res.status(200).json({ received: true });
+    } catch (err) {
+      // A unique-violation here (23505) means two near-simultaneous
+      // deliveries of the same Stripe event both passed the "not yet
+      // processed" check before either INSERT committed — Stripe does
+      // occasionally send duplicates close together. That race is
+      // benign: the other request is handling this event, so tell
+      // Stripe not to retry rather than surfacing it as a failure.
+      if (err.code === '23505') {
+        return res.status(200).json({ received: true, duplicate: true });
+      }
+      console.error('Stripe webhook processing error:', err.message);
+      return res.status(500).json({ error: 'Internal server error' });
     } finally {
       client.release();
     }

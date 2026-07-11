@@ -12,11 +12,27 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 1. ASSET HIERARCHY
 -- ------------------------------------------------------------
 
+-- payment_terms/deposit/agreement/advance columns below are also
+-- covered as a standalone delta in migrations/006_payment_terms_and_
+-- agreement.sql for an already-migrated database — same convention
+-- as migrations/008_installers_vendors.sql: this file is the source
+-- of truth for a FRESH install, the numbered migration is for
+-- existing Codespace databases only.
 CREATE TABLE clients (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     corporate_name TEXT NOT NULL,
     account_status TEXT NOT NULL DEFAULT 'active'
         CHECK (account_status IN ('active', 'credit_hold', 'inactive')),
+    payment_terms TEXT NOT NULL DEFAULT 'full_only',
+    deposit_type TEXT,
+    deposit_value NUMERIC,
+    agreement_signed BOOLEAN NOT NULL DEFAULT false,
+    agreement_date DATE,
+    agreement_document_path TEXT,
+    advance_agreed BOOLEAN NOT NULL DEFAULT false,
+    advance_amount NUMERIC,
+    advance_cleared BOOLEAN NOT NULL DEFAULT false,
+    advance_cleared_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -111,6 +127,8 @@ CREATE TABLE billing_batches (
     qbo_invoice_id TEXT,
     billing_period_start DATE NOT NULL,
     billing_period_end DATE NOT NULL,
+    payment_stage TEXT NOT NULL DEFAULT 'full',
+    parent_batch_id UUID REFERENCES billing_batches(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

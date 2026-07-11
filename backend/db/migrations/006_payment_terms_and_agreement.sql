@@ -1,3 +1,10 @@
+-- ------------------------------------------------------------
+-- 006: Payment terms, agreement, and advance tracking
+-- Standalone delta for an already-migrated database. Full schema.sql
+-- (already updated) covers this in-line for a FRESH install; run this
+-- file instead if you're migrating an existing Codespace database.
+-- ------------------------------------------------------------
+
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS payment_terms TEXT NOT NULL DEFAULT 'full_only';
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS deposit_type TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS deposit_value NUMERIC;
