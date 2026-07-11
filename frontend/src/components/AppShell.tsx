@@ -148,7 +148,7 @@ export function AppShell() {
     // scroll-bug fix: previously, tall content on a short viewport scrolled
     // the WHOLE page (sidebar included), pushing "Sign out" off-screen.
     // Now only <main> scrolls; the sidebar is pinned full-height.
-    <div className="h-screen flex bg-[var(--color-paper)] overflow-hidden">
+    <div className="h-screen flex bg-[var(--color-canvas)] overflow-hidden">
       <aside className="w-60 flex-shrink-0 app-sidebar text-white flex flex-col h-full">
         <div className="px-5 py-6 border-b border-white/10 flex-shrink-0">
           <div className="font-[var(--font-display)] font-semibold text-lg leading-tight">

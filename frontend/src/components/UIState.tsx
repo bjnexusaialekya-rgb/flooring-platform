@@ -103,7 +103,7 @@ export function MetricCard({
           </span>
         )}
       </div>
-      <p className={`font-[var(--font-mono)] text-3xl font-bold leading-none tracking-tight ${valueClass}`}>
+      <p className={`font-[var(--font-display)] text-3xl font-bold leading-none tracking-tight ${valueClass}`}>
         {value}
       </p>
       {trend && (
