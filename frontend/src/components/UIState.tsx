@@ -65,11 +65,11 @@ const TONE_CHIP_VAR: Record<MetricTone, string> = {
 
 const TONE_VALUE_CLASS: Record<MetricTone, string> = {
   default: 'text-[var(--color-ink)]',
-  total: 'text-[var(--color-ink)]',
-  progress: 'text-[var(--color-ink)]',
+  total: 'text-[#0a0a0a]',
+  progress: 'text-[#0a0a0a]',
   overdue: 'text-[var(--color-danger)]',
-  completed: 'text-[var(--color-ink)]',
-  revenue: 'text-[var(--color-ink)]',
+  completed: 'text-[#0a0a0a]',
+  revenue: 'text-[#0a0a0a]',
   danger: 'text-[var(--color-danger)]',
   success: 'text-[var(--color-success)]',
 };
@@ -92,20 +92,22 @@ export function MetricCard({
 
   return (
     <div className="bg-[var(--color-panel)] rounded-xl border surface-card surface-card-interactive border-[var(--color-concrete-light)] px-5 py-4">
-      <div className="flex items-start justify-between mb-2.5">
-        <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-concrete)]">{label}</p>
+      <div className="flex items-center gap-3.5">
         {icon && (
           <span
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: chipVar, color: '#ffffff' }}
           >
             {icon}
           </span>
         )}
+        <div className="min-w-0">
+          <p className={`font-[var(--font-display)] text-2xl font-bold leading-none tracking-tight ${valueClass}`}>
+            {value}
+          </p>
+          <p className="text-sm font-medium text-[var(--color-concrete)] mt-1 truncate">{label}</p>
+        </div>
       </div>
-      <p className={`font-[var(--font-display)] text-3xl font-bold leading-none tracking-tight ${valueClass}`}>
-        {value}
-      </p>
       {trend && (
         <p
           className={`flex items-center gap-1 text-xs mt-2 font-medium ${

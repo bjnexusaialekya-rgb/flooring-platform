@@ -36,6 +36,7 @@
   --color-ink-soft: #454c5c;
   --color-paper: #f0f5e1;
   --color-canvas: #fafaf7;
+  --gradient-canvas: linear-gradient(90deg, #f7f6dd 0%, #e7f6ef 100%);
   --color-panel: #f3f3db;
   --color-concrete: #6f7660;
   --color-concrete-light: #dde1c9;
@@ -47,7 +48,7 @@
   --color-primary-soft: #eef3d6;
   --color-primary-dark: #38430d;
 
-  --color-link: #1f6f4e;
+  --color-link: #1a56db;
 
   --color-plum: #166f4e;
   --color-plum-soft: #dbeee3;
@@ -80,19 +81,19 @@
      button fill with white text, so the raw sampled hues are safe
      here unlike the CTA gradient above. */
   --color-status-submitted: #7d8496;
-  --color-status-submitted-soft: #eaecf1;
+  --color-status-submitted-soft: #dfe2ea;
   --color-status-priced: #8a7714;
-  --color-status-priced-soft: #f7f1d6;
+  --color-status-priced-soft: #f5e8a0;
   --color-status-approved: #532aae;
-  --color-status-approved-soft: #ece4fa;
+  --color-status-approved-soft: #d6d4f5;
   --color-status-scheduled: #115256;
-  --color-status-scheduled-soft: #dceeef;
+  --color-status-scheduled-soft: #c3e3f2;
   --color-status-completed: #1e5c4d;
-  --color-status-completed-soft: #dcf3e9;
+  --color-status-completed-soft: #b9e8d4;
   --color-status-billing: #6d5bc7;
-  --color-status-billing-soft: #ece9fa;
+  --color-status-billing-soft: #d4cbf5;
   --color-status-invoiced: #1e5c4d;
-  --color-status-invoiced-soft: #dcf3e9;
+  --color-status-invoiced-soft: #b5edd0;
 
   --color-success: #1e5c4d;
   --color-success-soft: #dcf3e9;
@@ -166,7 +167,7 @@ h1, h2, .font-display {
 }
 
 .surface-card {
-  box-shadow: var(--elevation-2);
+  box-shadow: 0 2px 6px rgba(31,36,48,0.10), 0 12px 28px -8px rgba(31,36,48,0.22);
 }
 
 /* ============================================================
@@ -263,7 +264,7 @@ input, select, textarea {
   transition: box-shadow 150ms ease-out, transform 150ms ease-out;
 }
 .surface-card-interactive:hover {
-  box-shadow: var(--elevation-2);
+  box-shadow: 0 2px 6px rgba(31,36,48,0.10), 0 12px 28px -8px rgba(31,36,48,0.22);
   transform: translateY(-1px);
 }
 

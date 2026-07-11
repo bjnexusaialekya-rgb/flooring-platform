@@ -148,7 +148,7 @@ export function AppShell() {
     // scroll-bug fix: previously, tall content on a short viewport scrolled
     // the WHOLE page (sidebar included), pushing "Sign out" off-screen.
     // Now only <main> scrolls; the sidebar is pinned full-height.
-    <div className="h-screen flex bg-[var(--color-canvas)] overflow-hidden">
+    <div className="h-screen flex overflow-hidden" style={{ background: 'var(--gradient-canvas)' }}>
       <aside className="w-60 flex-shrink-0 app-sidebar text-white flex flex-col h-full">
         <div className="px-5 py-6 border-b border-white/10 flex-shrink-0">
           <div className="font-[var(--font-display)] font-semibold text-lg leading-tight">
@@ -183,7 +183,7 @@ export function AppShell() {
                         [
                           'relative flex items-center gap-2.5 pl-3 pr-3 py-2 rounded-md text-sm transition-colors',
                           isActive
-                            ? 'bg-white/[0.08] text-white font-semibold before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-full before:bg-[var(--color-accent-on-dark)]'
+                            ? 'bg-[#d4b83a] text-[#1f2430] font-semibold'
                             : 'text-white/60 font-medium hover:bg-white/5 hover:text-white/90',
                         ].join(' ')
                       }
@@ -218,7 +218,7 @@ export function AppShell() {
             actual page via Outlet context — see WorkOrdersListPage for the
             consumer side. Bell has no live notification source in the
             backend, so no badge count is shown until one exists. */}
-        <div className="flex-shrink-0 border-b border-[var(--color-concrete-light)] bg-[var(--color-panel)] px-8 py-4 flex items-center gap-4">
+        <div className="flex-shrink-0 border-b-4 border-[#e4ebbc] bg-[var(--color-panel)] px-8 py-4 flex items-center gap-4">
           <button
             type="button"
             className="w-9 h-9 rounded-lg flex items-center justify-center text-[var(--color-ink)] hover:bg-[var(--color-paper)] shrink-0"

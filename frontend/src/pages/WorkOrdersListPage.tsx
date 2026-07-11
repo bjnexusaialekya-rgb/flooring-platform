@@ -424,7 +424,7 @@ export function WorkOrdersListPage() {
                     <td className="px-5 py-4 font-mono text-xs">
                       <Link
                         to={`/work-orders/${wo.id}`}
-                        className="inline-flex items-center px-2 py-1 rounded-md border border-[var(--color-concrete-light)] bg-[var(--color-paper)] text-[var(--color-ink)] font-medium transition-colors hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)]"
+                        className="text-[var(--color-link)] font-semibold hover:underline"
                       >
                         {wo.po_number ?? wo.id.slice(0, 8)}
                       </Link>
