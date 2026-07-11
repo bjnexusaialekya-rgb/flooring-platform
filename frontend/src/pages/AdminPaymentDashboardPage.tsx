@@ -163,10 +163,10 @@ export function AdminPaymentDashboardPage() {
             <tbody>
               {payments.map((p) => (
                 <tr key={p.batch_id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
-                  <td className="py-2.5">{p.corporate_name}</td>
-                  <td className="py-2.5">{p.property_name}</td>
+                  <td className="py-2.5 text-[#0a0a0a] font-semibold">{p.corporate_name}</td>
+                  <td className="py-2.5 text-[#0a0a0a] font-semibold">{p.property_name}</td>
                   <td className="py-2.5 text-xs capitalize">{p.payment_stage}</td>
-                  <td className="py-2.5 font-mono text-xs">
+                  <td className="py-2.5 font-mono text-xs text-[#0a0a0a] font-bold">
                     {p.amount ? `$${Number(p.amount).toFixed(2)}` : '—'}
                   </td>
                   <td className="py-2.5">
@@ -174,7 +174,7 @@ export function AdminPaymentDashboardPage() {
                       {p.payment_status || 'pending'}
                     </span>
                   </td>
-                  <td className="py-2.5 font-mono text-xs">{p.qbo_invoice_id || '—'}</td>
+                  <td className="py-2.5 font-mono text-xs text-[#0a0a0a] font-semibold">{p.qbo_invoice_id || '—'}</td>
                   <td className="py-2.5 text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}

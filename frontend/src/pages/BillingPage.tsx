@@ -290,7 +290,7 @@ export function BillingPage() {
             <tbody>
               {batches.map((b) => (
                 <tr key={b.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
-                  <td className="py-2.5 pl-6">{b.property_name}</td>
+                  <td className="py-2.5 pl-6 text-[#0a0a0a] font-semibold">{b.property_name}</td>
                   <td className="py-2.5 text-xs">{b.billing_period_start} to {b.billing_period_end}</td>
                   <td className="py-2.5">
                     <span

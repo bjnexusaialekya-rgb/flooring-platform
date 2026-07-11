@@ -170,7 +170,7 @@ export function VendorsPage() {
             <tbody>
               {vendors.map((v) => (
                 <tr key={v.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
-                  <td className="px-5 py-3.5 font-medium">
+                  <td className="px-5 py-3.5 font-medium text-[#0a0a0a]">
                     {v.name}
                     {!v.is_active && (
                       <span className="ml-2 inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-[var(--color-concrete-light)] text-[var(--color-ink-soft)]">
@@ -182,8 +182,8 @@ export function VendorsPage() {
                   <td className="px-5 py-3.5 text-xs text-[var(--color-concrete)]">
                     {[v.contact_name, v.phone].filter(Boolean).join(' · ') || '—'}
                   </td>
-                  <td className="px-5 py-3.5 font-mono text-xs">{v.purchase_order_count}</td>
-                  <td className="px-5 py-3.5 font-mono text-xs">${Number(v.total_spend).toFixed(2)}</td>
+                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-semibold">{v.purchase_order_count}</td>
+                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-bold">${Number(v.total_spend).toFixed(2)}</td>
                   <td className="px-5 py-3.5 text-right">
                     {v.is_active && (
                       <button

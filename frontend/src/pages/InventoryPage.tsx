@@ -66,14 +66,14 @@ export function InventoryPage() {
             <tbody>
               {items.map((item) => (
                 <tr key={item.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
-                  <td className="px-5 py-3.5 font-mono text-xs">{item.sku}</td>
-                  <td className="px-5 py-3.5">{item.name}</td>
+                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-semibold">{item.sku}</td>
+                  <td className="px-5 py-3.5 text-[#0a0a0a] font-semibold">{item.name}</td>
                   <td className="px-5 py-3.5">
                     <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-[var(--color-plum-soft)] text-[var(--color-plum-dark)]">
                       {item.category}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 font-mono text-xs">
+                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-semibold">
                     {item.quantity_on_hand} {item.unit_of_measure}
                   </td>
                   <td className="px-5 py-3.5 font-mono text-xs text-[var(--color-concrete)]">

@@ -460,7 +460,7 @@ export function WorkOrdersListPage() {
                       // pricing-blind-boundary color reserved for that
                       // purpose elsewhere in the app (WorkOrderDetailPage's
                       // staff-only cost table, see AppShell.tsx's comment).
-                      <td className="px-5 py-4 text-right font-mono text-[var(--color-amber)] font-medium">
+                      <td className="px-5 py-4 text-right font-mono text-[#0a0a0a] font-bold">
                         {wo.total_value != null
                           ? `$${Number(wo.total_value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                           : '—'}

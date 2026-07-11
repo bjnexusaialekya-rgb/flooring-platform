@@ -178,7 +178,7 @@ export function InstallersPage() {
             <tbody>
               {installers.map((i) => (
                 <tr key={i.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
-                  <td className="px-5 py-3.5 font-medium">
+                  <td className="px-5 py-3.5 font-medium text-[#0a0a0a]">
                     {i.name}
                     {!i.is_active && (
                       <span className="ml-2 inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-[var(--color-concrete-light)] text-[var(--color-ink-soft)]">
@@ -190,8 +190,8 @@ export function InstallersPage() {
                   <td className="px-5 py-3.5 text-xs text-[var(--color-concrete)]">
                     {[i.phone, i.email].filter(Boolean).join(' · ') || '—'}
                   </td>
-                  <td className="px-5 py-3.5 font-mono text-xs">{i.crew_capacity}</td>
-                  <td className="px-5 py-3.5 font-mono text-xs">{i.open_work_order_count}</td>
+                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-semibold">{i.crew_capacity}</td>
+                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-semibold">{i.open_work_order_count}</td>
                   <td className="px-5 py-3.5 text-right">
                     {i.is_active && (
                       <button

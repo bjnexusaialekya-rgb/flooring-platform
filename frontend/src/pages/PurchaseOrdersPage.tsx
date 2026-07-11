@@ -243,9 +243,9 @@ export function PurchaseOrdersPage() {
                     className="group border-b last:border-0 border-[var(--color-concrete-light)] cursor-pointer hover:bg-[var(--color-concrete-light)]/20"
                   >
                     <td className="py-4 pl-6"><StatusBadge status={po.status} /></td>
-                    <td className="py-4 font-mono text-xs">{po.line_item_count}</td>
-                    <td className="py-4 font-mono text-xs">${Number(po.total_cost).toFixed(2)}</td>
-                    <td className="py-4 text-xs text-[var(--color-concrete)]">{new Date(po.created_at).toLocaleDateString()}</td>
+                    <td className="py-4 font-mono text-xs text-[#0a0a0a] font-semibold">{po.line_item_count}</td>
+                    <td className="py-4 font-mono text-xs text-[#0a0a0a] font-bold">${Number(po.total_cost).toFixed(2)}</td>
+                    <td className="py-4 text-xs text-[#0a0a0a] font-semibold">{new Date(po.created_at).toLocaleDateString()}</td>
                     <td className="py-4 pr-6 text-right">
                       <KebabMenu actions={[
                         { label: 'View detail', onClick: () => openDetail(po.id) },

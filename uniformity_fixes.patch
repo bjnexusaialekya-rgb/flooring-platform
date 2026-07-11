@@ -1,0 +1,204 @@
+diff --git a/frontend/src/pages/AdminPaymentDashboardPage.tsx b/frontend/src/pages/AdminPaymentDashboardPage.tsx
+index 1cac5d2..5c75960 100644
+--- a/frontend/src/pages/AdminPaymentDashboardPage.tsx
++++ b/frontend/src/pages/AdminPaymentDashboardPage.tsx
+@@ -163,10 +163,10 @@ export function AdminPaymentDashboardPage() {
+             <tbody>
+               {payments.map((p) => (
+                 <tr key={p.batch_id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+-                  <td className="py-2.5">{p.corporate_name}</td>
+-                  <td className="py-2.5">{p.property_name}</td>
++                  <td className="py-2.5 text-[#0a0a0a] font-semibold">{p.corporate_name}</td>
++                  <td className="py-2.5 text-[#0a0a0a] font-semibold">{p.property_name}</td>
+                   <td className="py-2.5 text-xs capitalize">{p.payment_stage}</td>
+-                  <td className="py-2.5 font-mono text-xs">
++                  <td className="py-2.5 font-mono text-xs text-[#0a0a0a] font-bold">
+                     {p.amount ? `$${Number(p.amount).toFixed(2)}` : '—'}
+                   </td>
+                   <td className="py-2.5">
+@@ -174,7 +174,7 @@ export function AdminPaymentDashboardPage() {
+                       {p.payment_status || 'pending'}
+                     </span>
+                   </td>
+-                  <td className="py-2.5 font-mono text-xs">{p.qbo_invoice_id || '—'}</td>
++                  <td className="py-2.5 font-mono text-xs text-[#0a0a0a] font-semibold">{p.qbo_invoice_id || '—'}</td>
+                   <td className="py-2.5 text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
+                 </tr>
+               ))}
+diff --git a/frontend/src/pages/BillingPage.tsx b/frontend/src/pages/BillingPage.tsx
+index 1274f62..9807d42 100644
+--- a/frontend/src/pages/BillingPage.tsx
++++ b/frontend/src/pages/BillingPage.tsx
+@@ -290,7 +290,7 @@ export function BillingPage() {
+             <tbody>
+               {batches.map((b) => (
+                 <tr key={b.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+-                  <td className="py-2.5 pl-6">{b.property_name}</td>
++                  <td className="py-2.5 pl-6 text-[#0a0a0a] font-semibold">{b.property_name}</td>
+                   <td className="py-2.5 text-xs">{b.billing_period_start} to {b.billing_period_end}</td>
+                   <td className="py-2.5">
+                     <span
+diff --git a/frontend/src/pages/ClientBillingPage.tsx b/frontend/src/pages/ClientBillingPage.tsx
+index 42a64c5..0a87780 100644
+--- a/frontend/src/pages/ClientBillingPage.tsx
++++ b/frontend/src/pages/ClientBillingPage.tsx
+@@ -136,9 +136,9 @@ export function ClientBillingPage() {
+             <tbody>
+               {statements.map((s) => (
+                 <tr key={s.id} className="border-b last:border-0 border-[var(--color-concrete-light)] align-top">
+-                  <td className="px-5 py-3.5">{s.property_name}</td>
++                  <td className="px-5 py-3.5 text-[#0a0a0a] font-semibold">{s.property_name}</td>
+                   <td className="px-5 py-3.5 text-xs">{s.billing_period_start} to {s.billing_period_end}</td>
+-                  <td className="px-5 py-3.5 font-mono text-xs">${Number(s.total_amount).toFixed(2)}</td>
++                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-bold">${Number(s.total_amount).toFixed(2)}</td>
+                   <td className="px-5 py-3.5">
+                     <span
+                       className={[
+diff --git a/frontend/src/pages/InstallersPage.tsx b/frontend/src/pages/InstallersPage.tsx
+index 38ef910..e699bd6 100644
+--- a/frontend/src/pages/InstallersPage.tsx
++++ b/frontend/src/pages/InstallersPage.tsx
+@@ -178,7 +178,7 @@ export function InstallersPage() {
+             <tbody>
+               {installers.map((i) => (
+                 <tr key={i.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+-                  <td className="px-5 py-3.5 font-medium">
++                  <td className="px-5 py-3.5 font-medium text-[#0a0a0a]">
+                     {i.name}
+                     {!i.is_active && (
+                       <span className="ml-2 inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-[var(--color-concrete-light)] text-[var(--color-ink-soft)]">
+@@ -190,8 +190,8 @@ export function InstallersPage() {
+                   <td className="px-5 py-3.5 text-xs text-[var(--color-concrete)]">
+                     {[i.phone, i.email].filter(Boolean).join(' · ') || '—'}
+                   </td>
+-                  <td className="px-5 py-3.5 font-mono text-xs">{i.crew_capacity}</td>
+-                  <td className="px-5 py-3.5 font-mono text-xs">{i.open_work_order_count}</td>
++                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-semibold">{i.crew_capacity}</td>
++                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-semibold">{i.open_work_order_count}</td>
+                   <td className="px-5 py-3.5 text-right">
+                     {i.is_active && (
+                       <button
+diff --git a/frontend/src/pages/InventoryPage.tsx b/frontend/src/pages/InventoryPage.tsx
+index 3f819fd..13654ec 100644
+--- a/frontend/src/pages/InventoryPage.tsx
++++ b/frontend/src/pages/InventoryPage.tsx
+@@ -66,14 +66,14 @@ export function InventoryPage() {
+             <tbody>
+               {items.map((item) => (
+                 <tr key={item.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+-                  <td className="px-5 py-3.5 font-mono text-xs">{item.sku}</td>
+-                  <td className="px-5 py-3.5">{item.name}</td>
++                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-semibold">{item.sku}</td>
++                  <td className="px-5 py-3.5 text-[#0a0a0a] font-semibold">{item.name}</td>
+                   <td className="px-5 py-3.5">
+                     <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-[var(--color-plum-soft)] text-[var(--color-plum-dark)]">
+                       {item.category}
+                     </span>
+                   </td>
+-                  <td className="px-5 py-3.5 font-mono text-xs">
++                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-semibold">
+                     {item.quantity_on_hand} {item.unit_of_measure}
+                   </td>
+                   <td className="px-5 py-3.5 font-mono text-xs text-[var(--color-concrete)]">
+diff --git a/frontend/src/pages/ProjectTrackerPage.tsx b/frontend/src/pages/ProjectTrackerPage.tsx
+index e8c92a0..37b1a9e 100644
+--- a/frontend/src/pages/ProjectTrackerPage.tsx
++++ b/frontend/src/pages/ProjectTrackerPage.tsx
+@@ -188,8 +188,8 @@ export function ProjectTrackerPage() {
+             <tbody>
+               {trackers.map((t) => (
+                 <tr key={t.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+-                  <td className="px-5 py-3.5">{t.project_name}</td>
+-                  <td className="px-5 py-3.5 text-[var(--color-concrete)]">{t.property_name}</td>
++                  <td className="px-5 py-3.5 text-[#0a0a0a] font-semibold">{t.project_name}</td>
++                  <td className="px-5 py-3.5 text-[#0a0a0a] font-semibold">{t.property_name}</td>
+                   <td className="px-5 py-3.5">
+                     <TrackerStatusPill status={t.status} />
+                   </td>
+@@ -200,7 +200,7 @@ export function ProjectTrackerPage() {
+                       defaultValue={t.summary_labor_total}
+                       onBlur={(e) => updateSummary(t.id, 'summaryLaborTotal', e.target.value)}
+                       className="w-24 px-2 py-1 rounded-md border border-[var(--color-concrete-light)] bg-[var(--color-paper)]
+-                                 font-mono text-xs text-[var(--color-ink)] transition-shadow
++                                 font-mono text-xs text-[#0a0a0a] font-semibold transition-shadow
+                                  focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] focus:bg-[var(--color-panel)]"
+                     />
+                   </td>
+@@ -211,7 +211,7 @@ export function ProjectTrackerPage() {
+                       defaultValue={t.summary_material_total}
+                       onBlur={(e) => updateSummary(t.id, 'summaryMaterialTotal', e.target.value)}
+                       className="w-24 px-2 py-1 rounded-md border border-[var(--color-concrete-light)] bg-[var(--color-paper)]
+-                                 font-mono text-xs text-[var(--color-ink)] transition-shadow
++                                 font-mono text-xs text-[#0a0a0a] font-semibold transition-shadow
+                                  focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] focus:bg-[var(--color-panel)]"
+                     />
+                   </td>
+diff --git a/frontend/src/pages/PurchaseOrdersPage.tsx b/frontend/src/pages/PurchaseOrdersPage.tsx
+index 1b518e8..b1d4616 100644
+--- a/frontend/src/pages/PurchaseOrdersPage.tsx
++++ b/frontend/src/pages/PurchaseOrdersPage.tsx
+@@ -243,9 +243,9 @@ export function PurchaseOrdersPage() {
+                     className="group border-b last:border-0 border-[var(--color-concrete-light)] cursor-pointer hover:bg-[var(--color-concrete-light)]/20"
+                   >
+                     <td className="py-4 pl-6"><StatusBadge status={po.status} /></td>
+-                    <td className="py-4 font-mono text-xs">{po.line_item_count}</td>
+-                    <td className="py-4 font-mono text-xs">${Number(po.total_cost).toFixed(2)}</td>
+-                    <td className="py-4 text-xs text-[var(--color-concrete)]">{new Date(po.created_at).toLocaleDateString()}</td>
++                    <td className="py-4 font-mono text-xs text-[#0a0a0a] font-semibold">{po.line_item_count}</td>
++                    <td className="py-4 font-mono text-xs text-[#0a0a0a] font-bold">${Number(po.total_cost).toFixed(2)}</td>
++                    <td className="py-4 text-xs text-[#0a0a0a] font-semibold">{new Date(po.created_at).toLocaleDateString()}</td>
+                     <td className="py-4 pr-6 text-right">
+                       <KebabMenu actions={[
+                         { label: 'View detail', onClick: () => openDetail(po.id) },
+diff --git a/frontend/src/pages/VendorsPage.tsx b/frontend/src/pages/VendorsPage.tsx
+index 918c831..5f56467 100644
+--- a/frontend/src/pages/VendorsPage.tsx
++++ b/frontend/src/pages/VendorsPage.tsx
+@@ -170,7 +170,7 @@ export function VendorsPage() {
+             <tbody>
+               {vendors.map((v) => (
+                 <tr key={v.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+-                  <td className="px-5 py-3.5 font-medium">
++                  <td className="px-5 py-3.5 font-medium text-[#0a0a0a]">
+                     {v.name}
+                     {!v.is_active && (
+                       <span className="ml-2 inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-[var(--color-concrete-light)] text-[var(--color-ink-soft)]">
+@@ -182,8 +182,8 @@ export function VendorsPage() {
+                   <td className="px-5 py-3.5 text-xs text-[var(--color-concrete)]">
+                     {[v.contact_name, v.phone].filter(Boolean).join(' · ') || '—'}
+                   </td>
+-                  <td className="px-5 py-3.5 font-mono text-xs">{v.purchase_order_count}</td>
+-                  <td className="px-5 py-3.5 font-mono text-xs">${Number(v.total_spend).toFixed(2)}</td>
++                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-semibold">{v.purchase_order_count}</td>
++                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-bold">${Number(v.total_spend).toFixed(2)}</td>
+                   <td className="px-5 py-3.5 text-right">
+                     {v.is_active && (
+                       <button
+diff --git a/frontend/src/pages/WorkOrderDetailPage.tsx b/frontend/src/pages/WorkOrderDetailPage.tsx
+index 928b5a9..da11d4f 100644
+--- a/frontend/src/pages/WorkOrderDetailPage.tsx
++++ b/frontend/src/pages/WorkOrderDetailPage.tsx
+@@ -281,8 +281,8 @@ export function WorkOrderDetailPage() {
+             <tbody>
+               {order.line_items.map((li, i) => (
+                 <tr key={i} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+-                  <td className="py-2.5 pl-6">{li.roomName}</td>
+-                  <td className="py-2.5 font-mono text-xs">{li.quantityCalculated}</td>
++                  <td className="py-2.5 pl-6 text-[#0a0a0a] font-semibold">{li.roomName}</td>
++                  <td className="py-2.5 font-mono text-xs text-[#0a0a0a] font-semibold">{li.quantityCalculated}</td>
+                   <td className="py-2.5 pr-6 font-mono text-xs text-[var(--color-concrete)]">
+                     {li.quantityActualUsed ?? '—'}
+                   </td>
+diff --git a/frontend/src/pages/WorkOrdersListPage.tsx b/frontend/src/pages/WorkOrdersListPage.tsx
+index c81f953..276ba95 100644
+--- a/frontend/src/pages/WorkOrdersListPage.tsx
++++ b/frontend/src/pages/WorkOrdersListPage.tsx
+@@ -460,7 +460,7 @@ export function WorkOrdersListPage() {
+                       // pricing-blind-boundary color reserved for that
+                       // purpose elsewhere in the app (WorkOrderDetailPage's
+                       // staff-only cost table, see AppShell.tsx's comment).
+-                      <td className="px-5 py-4 text-right font-mono text-[var(--color-amber)] font-medium">
++                      <td className="px-5 py-4 text-right font-mono text-[#0a0a0a] font-bold">
+                         {wo.total_value != null
+                           ? `$${Number(wo.total_value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                           : '—'}

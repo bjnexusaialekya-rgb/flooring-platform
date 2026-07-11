@@ -188,8 +188,8 @@ export function ProjectTrackerPage() {
             <tbody>
               {trackers.map((t) => (
                 <tr key={t.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
-                  <td className="px-5 py-3.5">{t.project_name}</td>
-                  <td className="px-5 py-3.5 text-[var(--color-concrete)]">{t.property_name}</td>
+                  <td className="px-5 py-3.5 text-[#0a0a0a] font-semibold">{t.project_name}</td>
+                  <td className="px-5 py-3.5 text-[#0a0a0a] font-semibold">{t.property_name}</td>
                   <td className="px-5 py-3.5">
                     <TrackerStatusPill status={t.status} />
                   </td>
@@ -200,7 +200,7 @@ export function ProjectTrackerPage() {
                       defaultValue={t.summary_labor_total}
                       onBlur={(e) => updateSummary(t.id, 'summaryLaborTotal', e.target.value)}
                       className="w-24 px-2 py-1 rounded-md border border-[var(--color-concrete-light)] bg-[var(--color-paper)]
-                                 font-mono text-xs text-[var(--color-ink)] transition-shadow
+                                 font-mono text-xs text-[#0a0a0a] font-semibold transition-shadow
                                  focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] focus:bg-[var(--color-panel)]"
                     />
                   </td>
@@ -211,7 +211,7 @@ export function ProjectTrackerPage() {
                       defaultValue={t.summary_material_total}
                       onBlur={(e) => updateSummary(t.id, 'summaryMaterialTotal', e.target.value)}
                       className="w-24 px-2 py-1 rounded-md border border-[var(--color-concrete-light)] bg-[var(--color-paper)]
-                                 font-mono text-xs text-[var(--color-ink)] transition-shadow
+                                 font-mono text-xs text-[#0a0a0a] font-semibold transition-shadow
                                  focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] focus:bg-[var(--color-panel)]"
                     />
                   </td>

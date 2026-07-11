@@ -136,9 +136,9 @@ export function ClientBillingPage() {
             <tbody>
               {statements.map((s) => (
                 <tr key={s.id} className="border-b last:border-0 border-[var(--color-concrete-light)] align-top">
-                  <td className="px-5 py-3.5">{s.property_name}</td>
+                  <td className="px-5 py-3.5 text-[#0a0a0a] font-semibold">{s.property_name}</td>
                   <td className="px-5 py-3.5 text-xs">{s.billing_period_start} to {s.billing_period_end}</td>
-                  <td className="px-5 py-3.5 font-mono text-xs">${Number(s.total_amount).toFixed(2)}</td>
+                  <td className="px-5 py-3.5 font-mono text-xs text-[#0a0a0a] font-bold">${Number(s.total_amount).toFixed(2)}</td>
                   <td className="px-5 py-3.5">
                     <span
                       className={[

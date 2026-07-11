@@ -281,8 +281,8 @@ export function WorkOrderDetailPage() {
             <tbody>
               {order.line_items.map((li, i) => (
                 <tr key={i} className="border-b last:border-0 border-[var(--color-concrete-light)]">
-                  <td className="py-2.5 pl-6">{li.roomName}</td>
-                  <td className="py-2.5 font-mono text-xs">{li.quantityCalculated}</td>
+                  <td className="py-2.5 pl-6 text-[#0a0a0a] font-semibold">{li.roomName}</td>
+                  <td className="py-2.5 font-mono text-xs text-[#0a0a0a] font-semibold">{li.quantityCalculated}</td>
                   <td className="py-2.5 pr-6 font-mono text-xs text-[var(--color-concrete)]">
                     {li.quantityActualUsed ?? '—'}
                   </td>
