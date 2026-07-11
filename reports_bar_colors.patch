@@ -1,44 +1,34 @@
 diff --git a/frontend/src/pages/ReportsPage.tsx b/frontend/src/pages/ReportsPage.tsx
-index 99656e8..6362758 100644
+index 6362758..61c6528 100644
 --- a/frontend/src/pages/ReportsPage.tsx
 +++ b/frontend/src/pages/ReportsPage.tsx
-@@ -61,6 +61,18 @@ function ChartTooltip({ active, payload }: any) {
+@@ -61,16 +61,20 @@ function ChartTooltip({ active, payload }: any) {
    );
  }
  
-+// Rotating palette for the "Top Properties" bars — reuses colors already
-+// established elsewhere in the app (plum, revenue chip, status-approved,
-+// amber, status-scheduled) rather than introducing new ones, so a 6th+
-+// property just wraps back to plum instead of running out of colors.
-+const PROPERTY_BAR_COLORS = [
-+  'var(--color-plum)',
-+  'var(--color-chip-revenue)',
-+  'var(--color-amber)',
-+  'var(--color-link)',
-+  'var(--color-status-scheduled)',
-+];
-+
+-// Rotating palette for the "Top Properties" bars — reuses colors already
+-// established elsewhere in the app (plum, revenue chip, status-approved,
+-// amber, status-scheduled) rather than introducing new ones, so a 6th+
+-// property just wraps back to plum instead of running out of colors.
++// Rotating palette for the "Top Properties" bars — cool tones only
++// (blue/teal/purple), deliberately excluding warm colors. Amber and red
++// are reserved elsewhere in this app for low-stock and danger/overdue
++// states, so a property bar landing on either would misleadingly read
++// as a warning. All five values already exist as design tokens
++// (status/chip colors), reused here for consistency rather than
++// introducing new arbitrary colors — a 6th+ property just wraps back
++// to the first.
+ const PROPERTY_BAR_COLORS = [
+-  'var(--color-plum)',
+-  'var(--color-chip-revenue)',
+-  'var(--color-amber)',
+-  'var(--color-link)',
+-  'var(--color-status-scheduled)',
++  'var(--color-link)',            // blue
++  'var(--color-status-priced)',   // teal
++  'var(--color-chip-revenue)',    // violet
++  'var(--color-status-scheduled)',// deep teal
++  'var(--color-status-approved)', // deep purple
+ ];
+ 
  function pctDelta(current: number, previous: number): { direction: 'up' | 'down'; label: string } | undefined {
-   if (previous === 0) return undefined;
-   const pct = ((current - previous) / previous) * 100;
-@@ -230,9 +242,18 @@ export function ReportsPage() {
-                 >
-                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
-                   <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
--                  <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={110} />
-+                  <YAxis
-+                    type="category"
-+                    dataKey="name"
-+                    tick={{ fontSize: 12, fontWeight: 600, fill: 'var(--color-ink)' }}
-+                    width={110}
-+                  />
-                   <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper)' }} />
--                  <Bar dataKey="count" fill="var(--color-plum)" radius={[0, 4, 4, 0]} />
-+                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-+                    {data.topProperties.map((_, i) => (
-+                      <Cell key={i} fill={PROPERTY_BAR_COLORS[i % PROPERTY_BAR_COLORS.length]} />
-+                    ))}
-+                  </Bar>
-                 </BarChart>
-               </ResponsiveContainer>
-             )}
