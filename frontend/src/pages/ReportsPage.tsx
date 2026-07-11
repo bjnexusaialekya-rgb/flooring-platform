@@ -61,20 +61,19 @@ function ChartTooltip({ active, payload }: any) {
   );
 }
 
-// Rotating palette for the "Top Properties" bars — cool tones only
-// (blue/teal/purple), deliberately excluding warm colors. Amber and red
-// are reserved elsewhere in this app for low-stock and danger/overdue
-// states, so a property bar landing on either would misleadingly read
-// as a warning. All five values already exist as design tokens
-// (status/chip colors), reused here for consistency rather than
-// introducing new arbitrary colors — a 6th+ property just wraps back
-// to the first.
-const PROPERTY_BAR_COLORS = [
-  'var(--color-link)',            // blue
-  'var(--color-status-priced)',   // teal
-  'var(--color-chip-revenue)',    // violet
-  'var(--color-status-scheduled)',// deep teal
-  'var(--color-status-approved)', // deep purple
+// Rotating gradient palette for the "Top Properties" bars — one distinct
+// hue per bar, each rendered as a light-to-bright horizontal gradient.
+// Previously this pulled from shared design tokens, but --color-status-priced
+// (used as "teal") is actually #8a7714 — an olive/mustard color, not teal —
+// so bar #2 always rendered wrong regardless of caching. Switching to
+// dedicated gradient stops defined below avoids reusing status tokens for
+// an unrelated purpose. A 6th+ property wraps back to the first gradient.
+const PROPERTY_BAR_GRADIENTS = [
+  { id: 'propBarBlue', from: '#a8dff5', to: '#0e93d8' },
+  { id: 'propBarPink', from: '#f2a0a0', to: '#e8375a' },
+  { id: 'propBarGreen', from: '#b7e07a', to: '#3aa72e' },
+  { id: 'propBarPurple', from: '#d9a8e0', to: '#a83fc0' },
+  { id: 'propBarOrange', from: '#f5c98a', to: '#e8821f' },
 ];
 
 function pctDelta(current: number, previous: number): { direction: 'up' | 'down'; label: string } | undefined {
@@ -244,6 +243,14 @@ export function ReportsPage() {
                   layout="vertical"
                   margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
                 >
+                  <defs>
+                    {PROPERTY_BAR_GRADIENTS.map((g) => (
+                      <linearGradient key={g.id} id={g.id} x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor={g.from} />
+                        <stop offset="100%" stopColor={g.to} />
+                      </linearGradient>
+                    ))}
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
                   <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
                   <YAxis
@@ -253,9 +260,12 @@ export function ReportsPage() {
                     width={110}
                   />
                   <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper)' }} />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                  <Bar dataKey="count" radius={[0, 8, 8, 0]}>
                     {data.topProperties.map((_, i) => (
-                      <Cell key={i} fill={PROPERTY_BAR_COLORS[i % PROPERTY_BAR_COLORS.length]} />
+                      <Cell
+                        key={i}
+                        fill={`url(#${PROPERTY_BAR_GRADIENTS[i % PROPERTY_BAR_GRADIENTS.length].id})`}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
