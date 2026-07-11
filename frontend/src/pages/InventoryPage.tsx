@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Boxes } from 'lucide-react';
+import { Boxes, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { api, type InventoryItem } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 
@@ -31,11 +31,12 @@ export function InventoryPage() {
 
       {items !== null && items.length > 0 && (
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <MetricCard label="Total SKUs" value={String(totalSkus)} />
+          <MetricCard label="Total SKUs" value={String(totalSkus)} tone="total" icon={<Boxes size={18} />} />
           <MetricCard
             label="Below reorder threshold"
             value={String(belowReorder)}
             tone={belowReorder > 0 ? 'danger' : 'success'}
+            icon={belowReorder > 0 ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
           />
         </div>
       )}

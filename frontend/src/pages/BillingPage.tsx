@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { FileText } from 'lucide-react';
+import { FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { api, downloadFile } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { Button } from '../components/Button';
@@ -195,12 +195,13 @@ export function BillingPage() {
 
       {batches !== null && batches.length > 0 && (
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <MetricCard label="Statements" value={String(batches.length)} />
-          <MetricCard label="Synced to QBO" value={String(syncedCount)} tone="success" />
+          <MetricCard label="Statements" value={String(batches.length)} tone="total" icon={<FileText size={18} />} />
+          <MetricCard label="Synced to QBO" value={String(syncedCount)} tone="success" icon={<CheckCircle2 size={18} />} />
           <MetricCard
             label="Sync Failures"
             value={String(failures.length)}
             tone={failures.length > 0 ? 'danger' : 'default'}
+            icon={failures.length > 0 ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
           />
         </div>
       )}

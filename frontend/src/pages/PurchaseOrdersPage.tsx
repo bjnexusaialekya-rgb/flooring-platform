@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Package, FileSearch } from 'lucide-react';
+import { Package, FileSearch, Clock, DollarSign } from 'lucide-react';
 import { api, ApiRequestError, type PurchaseOrderListItem, type PurchaseOrderDetail, type InventoryItem } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { KebabMenu } from '../components/KebabMenu';
@@ -118,9 +118,9 @@ export function PurchaseOrdersPage() {
 
       {orders !== null && orders.length > 0 && (
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <MetricCard label="Total Purchase Orders" value={String(orders.length)} />
-          <MetricCard label="Open Orders" value={String(openOrders.length)} />
-          <MetricCard label="Open Order Value" value={`$${openValue.toFixed(2)}`} />
+          <MetricCard label="Total Purchase Orders" value={String(orders.length)} tone="total" icon={<Package size={18} />} />
+          <MetricCard label="Open Orders" value={String(openOrders.length)} tone="progress" icon={<Clock size={18} />} />
+          <MetricCard label="Open Order Value" value={`$${openValue.toFixed(2)}`} tone="revenue" icon={<DollarSign size={18} />} />
         </div>
       )}
 

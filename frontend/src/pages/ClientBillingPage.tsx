@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Receipt } from 'lucide-react';
+import { Receipt, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { Button } from '../components/Button';
@@ -106,8 +106,9 @@ export function ClientBillingPage() {
             label="Outstanding Balance"
             value={`$${outstandingTotal.toFixed(2)}`}
             tone={outstandingTotal > 0 ? 'danger' : 'success'}
+            icon={outstandingTotal > 0 ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
           />
-          <MetricCard label="Statements" value={String(statements.length)} />
+          <MetricCard label="Statements" value={String(statements.length)} tone="total" icon={<Receipt size={18} />} />
         </div>
       )}
 

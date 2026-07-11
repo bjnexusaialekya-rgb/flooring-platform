@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Receipt } from 'lucide-react';
+import { Receipt, DollarSign, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { Button } from '../components/Button';
@@ -102,14 +102,15 @@ export function AdminPaymentDashboardPage() {
 
       {payments !== null && payments.length > 0 && (
         <div className="grid grid-cols-4 gap-4">
-          <MetricCard label="Total Billed" value={`$${metrics.totalAmount.toFixed(2)}`} />
-          <MetricCard label="Collected" value={`$${metrics.succeededAmount.toFixed(2)}`} tone="success" />
+          <MetricCard label="Total Billed" value={`$${metrics.totalAmount.toFixed(2)}`} tone="total" icon={<DollarSign size={18} />} />
+          <MetricCard label="Collected" value={`$${metrics.succeededAmount.toFixed(2)}`} tone="success" icon={<CheckCircle2 size={18} />} />
           <MetricCard
             label="Outstanding"
             value={`$${metrics.outstandingAmount.toFixed(2)}`}
             tone={metrics.outstandingAmount > 0 ? 'danger' : 'default'}
+            icon={metrics.outstandingAmount > 0 ? <AlertTriangle size={18} /> : <Receipt size={18} />}
           />
-          <MetricCard label="Advances Due" value={String(metrics.advanceCount)} tone={metrics.advanceCount > 0 ? 'danger' : 'default'} />
+          <MetricCard label="Advances Due" value={String(metrics.advanceCount)} tone={metrics.advanceCount > 0 ? 'danger' : 'default'} icon={metrics.advanceCount > 0 ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />} />
         </div>
       )}
 

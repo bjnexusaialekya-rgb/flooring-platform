@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { FolderKanban } from 'lucide-react';
+import { FolderKanban, Users, Package } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { Button } from '../components/Button';
@@ -157,9 +157,9 @@ export function ProjectTrackerPage() {
 
       {trackers !== null && trackers.length > 0 && (
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <MetricCard label="Active projects" value={String(activeCount)} tone="success" />
-          <MetricCard label="Total labor" value={`$${totalLabor.toFixed(2)}`} />
-          <MetricCard label="Total material" value={`$${totalMaterial.toFixed(2)}`} />
+          <MetricCard label="Active projects" value={String(activeCount)} tone="success" icon={<FolderKanban size={18} />} />
+          <MetricCard label="Total labor" value={`$${totalLabor.toFixed(2)}`} tone="total" icon={<Users size={18} />} />
+          <MetricCard label="Total material" value={`$${totalMaterial.toFixed(2)}`} tone="revenue" icon={<Package size={18} />} />
         </div>
       )}
 

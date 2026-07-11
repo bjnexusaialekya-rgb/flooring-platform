@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import { ClipboardList, SearchX, ChevronUp, ChevronDown, AlertTriangle, X, Clock, CheckCircle2, Download } from 'lucide-react';
+import { ClipboardList, SearchX, ChevronUp, ChevronDown, AlertTriangle, X, Clock, CheckCircle2, Download, SlidersHorizontal } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
@@ -92,6 +92,9 @@ export function WorkOrdersListPage() {
   const [orders, setOrders] = useState<WorkOrderSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [installerFilter, setInstallerFilter] = useState<string>('all');
+  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -109,8 +112,19 @@ export function WorkOrdersListPage() {
 
   useEffect(loadOrders, []);
 
+  // Distinct installer names present in the current data set, for the
+  // Filters panel dropdown. Client-role users never see installer_name
+  // (see the pricing-blind branch in workOrderRoutes.js), so this list
+  // is naturally empty for them and the dropdown has nothing to show —
+  // no separate role check needed here for that reason.
+  const installerOptions = Array.from(
+    new Set((orders ?? []).map((o) => o.installer_name).filter((n): n is string => !!n))
+  ).sort();
+
   const filtered = (orders ?? []).filter((wo) => {
     if (statusFilter !== 'all' && wo.status !== statusFilter) return false;
+    if (installerFilter !== 'all' && wo.installer_name !== installerFilter) return false;
+    if (overdueOnly && !isOverdue(wo)) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const haystack = [
@@ -289,10 +303,14 @@ export function WorkOrdersListPage() {
           <MetricCard label="Total work orders" value={String(totalCount)} tone="total" icon={<ClipboardList size={18} />} />
           <MetricCard label="In progress" value={String(openCount)} tone="progress" icon={<Clock size={18} />} />
           <MetricCard label="Completed" value={String(completedCount)} tone="completed" icon={<CheckCircle2 size={18} />} />
+          {/* Always tone="overdue" — even at zero. This card must never
+              borrow the Completed card's green, since sharing that tone
+              made the two cards visually indistinguishable at a glance.
+              Only the icon glyph changes to reflect the good/bad state. */}
           <MetricCard
             label="Overdue"
             value={String(overdueCount)}
-            tone={overdueCount > 0 ? 'overdue' : 'completed'}
+            tone="overdue"
             icon={overdueCount > 0 ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
           />
         </div>
@@ -314,6 +332,70 @@ export function WorkOrdersListPage() {
           <span className="text-xs text-[var(--color-concrete)] ml-auto shrink-0">
             {filtered.length} of {orders.length}
           </span>
+          {isStaffOrAdmin && (
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((o) => !o)}
+                className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                  installerFilter !== 'all' || overdueOnly
+                    ? 'border-[var(--color-primary)] text-[var(--color-primary)] bg-[var(--color-primary-soft)]'
+                    : 'border-[var(--color-concrete-light)] text-[var(--color-ink)] hover:bg-[var(--color-paper)]'
+                }`}
+              >
+                <SlidersHorizontal size={14} />
+                Filters
+                {(installerFilter !== 'all' || overdueOnly) && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]" />
+                )}
+              </button>
+
+              {filtersOpen && (
+                <>
+                  {/* Backdrop to close the panel on outside click, without
+                      needing a ref + document listener for this one panel. */}
+                  <div className="fixed inset-0 z-10" onClick={() => setFiltersOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] shadow-lg p-4 z-20 space-y-4">
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">
+                        Installer
+                      </label>
+                      <select
+                        value={installerFilter}
+                        onChange={(e) => setInstallerFilter(e.target.value)}
+                        className="w-full text-sm border border-[var(--color-concrete-light)] rounded-lg px-2.5 py-1.5 bg-[var(--color-panel)] text-[var(--color-ink)]"
+                      >
+                        <option value="all">All installers</option>
+                        {installerOptions.map((name) => (
+                          <option key={name} value={name}>{name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <label className="flex items-center gap-2 text-sm text-[var(--color-ink)] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={overdueOnly}
+                        onChange={(e) => setOverdueOnly(e.target.checked)}
+                        className="rounded border-[var(--color-concrete-light)]"
+                      />
+                      Overdue only
+                    </label>
+
+                    {(installerFilter !== 'all' || overdueOnly) && (
+                      <button
+                        type="button"
+                        onClick={() => { setInstallerFilter('all'); setOverdueOnly(false); }}
+                        className="text-xs font-medium text-[var(--color-primary)] hover:underline"
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <button
             type="button"
             onClick={exportCsv}
