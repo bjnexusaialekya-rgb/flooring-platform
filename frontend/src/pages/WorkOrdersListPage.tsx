@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ClipboardList, SearchX, ChevronUp, ChevronDown, AlertTriangle, X } from 'lucide-react';
+import { Link, useOutletContext } from 'react-router-dom';
+import { ClipboardList, SearchX, ChevronUp, ChevronDown, AlertTriangle, X, Clock, CheckCircle2, Download } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
@@ -16,6 +16,17 @@ type WorkOrderSummary = {
   po_number: string | null;
   target_turn_date: string | null;
   created_at: string;
+  // Below are the new join columns from the backend's search-enabling
+  // update. customer_name and total_value are ONLY ever present for
+  // staff/admin — the client-role query never selects them, so there's
+  // no pricing-blind risk here even though the type allows them.
+  property_name?: string | null;
+  street_address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  customer_name?: string | null;
+  installer_name?: string | null;
+  total_value?: number | string | null;
 };
 
 type SortKey = 'po_number' | 'target_turn_date' | 'created_at';
@@ -77,10 +88,10 @@ function isOverdue(wo: WorkOrderSummary) {
 
 export function WorkOrdersListPage() {
   const { user } = useAuth();
+  const { searchQuery } = useOutletContext<{ searchQuery: string }>();
   const [orders, setOrders] = useState<WorkOrderSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -100,7 +111,21 @@ export function WorkOrdersListPage() {
 
   const filtered = (orders ?? []).filter((wo) => {
     if (statusFilter !== 'all' && wo.status !== statusFilter) return false;
-    if (search && !(wo.po_number ?? wo.id).toLowerCase().includes(search.toLowerCase())) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const haystack = [
+        wo.po_number ?? wo.id,
+        wo.customer_name,
+        wo.property_name,
+        wo.street_address,
+        wo.city,
+        wo.installer_name,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
     return true;
   });
 
@@ -173,22 +198,72 @@ export function WorkOrdersListPage() {
 
   const totalCount = orders?.length ?? 0;
   const openCount = orders?.filter((o) => !CLOSED_STATUSES.includes(o.status)).length ?? 0;
+  const completedCount = orders?.filter((o) => CLOSED_STATUSES.includes(o.status)).length ?? 0;
   const overdueCount = orders?.filter(isOverdue).length ?? 0;
+
+  // Per-status counts for the filter tabs (live counts, mirrors what the
+  // mock shows). Built off the full `orders` array, not `filtered`, so
+  // switching tabs doesn't make the other tabs' counts shift under you.
+  const statusCounts: Record<string, number> = {};
+  for (const s of Object.keys(STATUS_LABELS)) {
+    statusCounts[s] = orders?.filter((o) => o.status === s).length ?? 0;
+  }
+
+  // Export is built from `filtered` (whatever's currently on screen, not
+  // the full unfiltered set) and only reads fields already present on the
+  // WorkOrderSummary objects this role's API response gave us — so a
+  // client's export can't contain columns a client was never sent in the
+  // first place. No separate permission check needed here for that reason.
+  function exportCsv() {
+    const cols: { key: keyof WorkOrderSummary; label: string }[] = isStaffOrAdmin
+      ? [
+          { key: 'po_number', label: 'PO Number' },
+          { key: 'customer_name', label: 'Customer' },
+          { key: 'property_name', label: 'Project' },
+          { key: 'installer_name', label: 'Installer' },
+          { key: 'status', label: 'Status' },
+          { key: 'target_turn_date', label: 'Target Turn Date' },
+          { key: 'total_value', label: 'Value' },
+          { key: 'created_at', label: 'Submitted' },
+        ]
+      : [
+          { key: 'po_number', label: 'PO Number' },
+          { key: 'property_name', label: 'Project' },
+          { key: 'status', label: 'Status' },
+          { key: 'target_turn_date', label: 'Target Turn Date' },
+          { key: 'created_at', label: 'Submitted' },
+        ];
+
+    const escapeCell = (v: unknown) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+
+    const rows = [
+      cols.map((c) => c.label).join(','),
+      ...filtered.map((wo) => cols.map((c) => escapeCell(wo[c.key])).join(',')),
+    ];
+
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `work-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="font-[var(--font-display)] text-2xl font-semibold text-[var(--color-ink)]">
-            Work Orders
-          </h1>
-          <p className="text-sm text-[var(--color-concrete)] mt-1">
-            {user?.role === 'client'
-              ? "Track the status of work orders you've submitted."
-              : 'Queue of all active work orders across properties.'}
+      {/* Title lives in the topbar now (AppShell). For staff/admin the
+          topbar also carries the "New Work Order" CTA, so nothing extra
+          renders here for them. Clients keep their own subtitle + button
+          since the topbar CTA is staff/admin-only (see getTopbarConfig). */}
+      {user?.role === 'client' && (
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-sm text-[var(--color-concrete)]">
+            Track the status of work orders you've submitted.
           </p>
-        </div>
-        {user?.role === 'client' && (
           <Link
             to="/work-orders/new"
             className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white
@@ -196,8 +271,8 @@ export function WorkOrdersListPage() {
           >
             + Submit Work Order
           </Link>
-        )}
-      </div>
+        </div>
+      )}
 
       {error && (
         <div className="text-sm text-[var(--color-danger)] bg-[var(--color-danger-soft)] rounded-md px-4 py-3 mb-4">
@@ -206,41 +281,47 @@ export function WorkOrdersListPage() {
       )}
 
       {orders !== null && orders.length > 0 && (
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <MetricCard label="Total work orders" value={String(totalCount)} />
-          <MetricCard label="Open" value={String(openCount)} />
+        // 4 cards, not the mock's 5 — deliberately no "Total Revenue" card
+        // here. That number already lives on the Dashboard (reportRoutes.js
+        // revenueThisMonth), and this page has no other unique revenue
+        // scope to show that wouldn't just be the same figure restated.
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <MetricCard label="Total work orders" value={String(totalCount)} tone="total" icon={<ClipboardList size={18} />} />
+          <MetricCard label="In progress" value={String(openCount)} tone="progress" icon={<Clock size={18} />} />
+          <MetricCard label="Completed" value={String(completedCount)} tone="completed" icon={<CheckCircle2 size={18} />} />
           <MetricCard
             label="Overdue"
             value={String(overdueCount)}
-            tone={overdueCount > 0 ? 'danger' : 'success'}
+            tone={overdueCount > 0 ? 'overdue' : 'completed'}
+            icon={overdueCount > 0 ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
           />
         </div>
       )}
 
       {orders && orders.length > 0 && (
         <div className="flex items-center gap-3 mb-4">
-          <input
-            type="text"
-            placeholder="Search PO number…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm w-56
-                       focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]"
-          />
           <div className="flex items-center gap-2 flex-wrap">
-            <FilterChip label="All statuses" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
+            <FilterChip label={`All statuses (${totalCount})`} active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} />
             {Object.keys(STATUS_LABELS).map((s) => (
               <FilterChip
                 key={s}
-                label={STATUS_LABELS[s]}
+                label={`${STATUS_LABELS[s]} (${statusCounts[s]})`}
                 active={statusFilter === s}
                 onClick={() => setStatusFilter(s)}
               />
             ))}
           </div>
-          <span className="text-xs text-[var(--color-concrete)] ml-auto">
+          <span className="text-xs text-[var(--color-concrete)] ml-auto shrink-0">
             {filtered.length} of {orders.length}
           </span>
+          <button
+            type="button"
+            onClick={exportCsv}
+            className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg border border-[var(--color-concrete-light)] text-[var(--color-ink)] hover:bg-[var(--color-paper)] shrink-0"
+          >
+            <Download size={14} />
+            Export
+          </button>
         </div>
       )}
 
@@ -308,10 +389,14 @@ export function WorkOrdersListPage() {
                 <th className="px-5 py-3 group">
                   <SortHeader label="PO Number" sortKeyValue="po_number" currentKey={sortKey} currentDir={sortDir} onSort={toggleSort} />
                 </th>
+                {isStaffOrAdmin && <th className="px-5 py-3 font-medium">Customer</th>}
+                <th className="px-5 py-3 font-medium">Project</th>
+                {isStaffOrAdmin && <th className="px-5 py-3 font-medium">Installer</th>}
                 <th className="px-5 py-3 group">
                   <SortHeader label="Target Turn Date" sortKeyValue="target_turn_date" currentKey={sortKey} currentDir={sortDir} onSort={toggleSort} />
                 </th>
                 <th className="px-5 py-3 font-medium">Status</th>
+                {isStaffOrAdmin && <th className="px-5 py-3 font-medium text-right">Value</th>}
                 <th className="px-5 py-3 group">
                   <SortHeader label="Submitted" sortKeyValue="created_at" currentKey={sortKey} currentDir={sortDir} onSort={toggleSort} />
                 </th>
@@ -344,6 +429,18 @@ export function WorkOrdersListPage() {
                         {wo.po_number ?? wo.id.slice(0, 8)}
                       </Link>
                     </td>
+                    {isStaffOrAdmin && (
+                      <td className="px-5 py-4 text-[var(--color-ink)]">{wo.customer_name ?? '—'}</td>
+                    )}
+                    <td className="px-5 py-4 text-[var(--color-ink-soft)]">
+                      {wo.property_name ?? '—'}
+                      {wo.street_address && (
+                        <div className="text-xs text-[var(--color-concrete)]">{wo.street_address}</div>
+                      )}
+                    </td>
+                    {isStaffOrAdmin && (
+                      <td className="px-5 py-4 text-[var(--color-ink-soft)]">{wo.installer_name ?? '—'}</td>
+                    )}
                     <td className="px-5 py-4">
                       {wo.target_turn_date && !isNaN(new Date(wo.target_turn_date).getTime()) ? (
                         <span className={`flex items-center gap-1.5 ${overdue ? 'text-[var(--color-danger)] font-medium' : 'text-[var(--color-ink-soft)]'}`}>
@@ -357,6 +454,18 @@ export function WorkOrdersListPage() {
                     <td className="px-5 py-4">
                       <StatusPill status={wo.status} />
                     </td>
+                    {isStaffOrAdmin && (
+                      // Amber, deliberately — this is the one spot on this
+                      // page that touches price data, so it uses the same
+                      // pricing-blind-boundary color reserved for that
+                      // purpose elsewhere in the app (WorkOrderDetailPage's
+                      // staff-only cost table, see AppShell.tsx's comment).
+                      <td className="px-5 py-4 text-right font-mono text-[var(--color-amber)] font-medium">
+                        {wo.total_value != null
+                          ? `$${Number(wo.total_value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          : '—'}
+                      </td>
+                    )}
                     <td className="px-5 py-4 text-[var(--color-concrete)]">
                       {new Date(wo.created_at).toLocaleDateString()}
                     </td>

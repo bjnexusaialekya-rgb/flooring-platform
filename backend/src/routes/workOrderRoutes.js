@@ -19,8 +19,12 @@ router.get('/', async (req, res) => {
   try {
     let result;
     if (req.user.role === 'client') {
+      // Property name/address added for search — same pricing-blind
+      // boundary as before, these are location columns, not price
+      // columns, so adding them doesn't touch the boundary at all.
       result = await pool.query(
-        `SELECT wo.id, wo.status, wo.po_number, wo.target_turn_date, wo.created_at
+        `SELECT wo.id, wo.status, wo.po_number, wo.target_turn_date, wo.created_at,
+                p.name AS property_name, p.street_address, p.city, p.state
          FROM work_orders wo
          JOIN units u ON u.id = wo.unit_id
          JOIN buildings b ON b.id = u.building_id
@@ -30,11 +34,31 @@ router.get('/', async (req, res) => {
         [req.user.clientId]
       );
     } else {
-      // staff/admin see the full queue across all clients
+      // staff/admin see the full queue across all clients, plus the
+      // customer (client corporate name), installer name, and total_value
+      // — needed for the queue table columns and search. total_value uses
+      // the same quantity_calculated * unit_price_charged formula as
+      // reportRoutes.js's revenueThisMonth, so this number and the
+      // Dashboard's revenue figure are always consistent with each other.
+      // NEVER add customer_name/total_value to the client-role branch above
+      // — that's the pricing-blind boundary this whole schema is built around.
       result = await pool.query(
-        `SELECT id, status, po_number, target_turn_date, created_at
-         FROM work_orders
-         ORDER BY created_at DESC`
+        `SELECT wo.id, wo.status, wo.po_number, wo.target_turn_date, wo.created_at,
+                c.corporate_name AS customer_name,
+                p.name AS property_name, p.street_address, p.city, p.state,
+                i.name AS installer_name,
+                COALESCE(
+                  (SELECT SUM(woli.quantity_calculated * woli.unit_price_charged)
+                   FROM work_order_line_items woli
+                   WHERE woli.work_order_id = wo.id), 0
+                ) AS total_value
+         FROM work_orders wo
+         JOIN units u ON u.id = wo.unit_id
+         JOIN buildings b ON b.id = u.building_id
+         JOIN properties p ON p.id = b.property_id
+         JOIN clients c ON c.id = p.client_id
+         LEFT JOIN installers i ON i.id = wo.installer_id
+         ORDER BY wo.created_at DESC`
       );
     }
     return res.status(200).json(result.rows);
