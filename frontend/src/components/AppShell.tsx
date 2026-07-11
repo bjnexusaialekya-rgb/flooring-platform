@@ -81,8 +81,8 @@ export function AppShell() {
   const navGroups = NAV_BY_ROLE[user.role] ?? [];
 
   return (
-    <div className="min-h-screen flex bg-[var(--color-paper)]">
-      <aside className="w-60 flex-shrink-0 bg-[var(--color-ink)] text-white flex flex-col">
+    <div className="h-screen flex bg-[var(--color-paper)] overflow-hidden">
+      <aside className="w-60 flex-shrink-0 h-full bg-[var(--color-ink)] text-white flex flex-col overflow-hidden">
         <div className="px-5 py-6 border-b border-white/10">
           <div className="font-[var(--font-display)] font-semibold text-lg leading-tight">
             Trestle<span className="text-[var(--color-amber)]">.</span>

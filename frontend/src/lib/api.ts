@@ -39,6 +39,28 @@ export const api = {
     request<T>(path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined }),
 };
 
+export async function downloadFile(path: string, filename: string): Promise<void> {
+  const token = localStorage.getItem('flooring_jwt');
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE_URL}${path}`, { headers });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({ error: res.statusText }))) as ApiError;
+    throw new ApiRequestError(res.status, body);
+  }
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export type Role = 'client' | 'staff' | 'admin';
 
 export type LoginResponse = {
