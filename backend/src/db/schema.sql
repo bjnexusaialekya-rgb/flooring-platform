@@ -285,3 +285,48 @@ CREATE TABLE qbo_sync_failures (
     failed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     resolved BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+-- ------------------------------------------------------------
+-- 9. INSTALLERS & VENDORS — real entities replacing the assigned_to
+-- borrow-from-users hack and the vendor-less purchase_orders gap.
+-- See migrations/002_installers_vendors.sql for the standalone delta
+-- to run against an already-migrated database (this file is only
+-- ever applied in full against a fresh one).
+-- ------------------------------------------------------------
+
+CREATE TABLE installers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    phone TEXT,
+    email TEXT,
+    specialty TEXT
+        CHECK (specialty IN ('LVP', 'Carpet', 'Sheet Vinyl', 'Tile', 'Hardwood', 'General') OR specialty IS NULL),
+    crew_capacity INT NOT NULL DEFAULT 1 CHECK (crew_capacity > 0),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_installers_active ON installers(is_active);
+
+ALTER TABLE work_orders
+    ADD COLUMN installer_id UUID REFERENCES installers(id) ON DELETE SET NULL;
+
+CREATE INDEX idx_wo_installer ON work_orders(installer_id);
+
+CREATE TABLE vendors (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL,
+    contact_name TEXT,
+    phone TEXT,
+    email TEXT,
+    account_number TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_vendors_active ON vendors(is_active);
+
+ALTER TABLE purchase_orders
+    ADD COLUMN vendor_id UUID REFERENCES vendors(id) ON DELETE SET NULL;
+
+CREATE INDEX idx_po_vendor ON purchase_orders(vendor_id);

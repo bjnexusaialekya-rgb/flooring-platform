@@ -107,5 +107,32 @@ export type PurchaseOrderDetail = {
   status: string;
   created_at: string;
   created_by_name: string | null;
+  vendor_id: string | null;
+  vendor_name: string | null;
   lineItems: PurchaseOrderLineItem[];
+};
+
+export type Installer = {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  specialty: string | null;
+  crew_capacity: number;
+  is_active: boolean;
+  created_at: string;
+  open_work_order_count: number;
+};
+
+export type Vendor = {
+  id: string;
+  name: string;
+  contact_name: string | null;
+  phone: string | null;
+  email: string | null;
+  account_number: string | null;
+  is_active: boolean;
+  created_at: string;
+  purchase_order_count: number;
+  total_spend: string;
 };

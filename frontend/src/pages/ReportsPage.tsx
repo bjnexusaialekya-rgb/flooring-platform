@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, Building2 } from 'lucide-react';
+import { TrendingUp, Building2, DollarSign, AlertOctagon, RefreshCw } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, MetricCard } from '../components/UIState';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import {
+  BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from 'recharts';
 import { STATUS_LABELS, statusHex } from '../lib/statusColors';
 
 type ReportSummary = {
   statusCounts: { status: string; count: number }[];
   revenueThisMonth: number;
+  revenueLastMonth: number;
+  overdueCount: number;
+  revenueTrend: { day: string; total: number }[];
   topProperties: { name: string; work_order_count: number }[];
   pendingSyncFailures: number;
 };
@@ -15,8 +21,8 @@ type ReportSummary = {
 function DashboardSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {Array.from({ length: 3 }).map((_, i) => (
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] px-5 py-4">
             <div className="h-3 bg-[var(--color-concrete-light)] rounded w-24 mb-3" />
             <div className="h-6 bg-[var(--color-concrete-light)] rounded w-16" />
@@ -46,13 +52,22 @@ function ChartTooltip({ active, payload }: any) {
   return (
     <div className="bg-[var(--color-panel)] border border-[var(--color-concrete-light)] rounded-md shadow-lg px-3 py-2">
       <p className="text-xs text-[var(--color-concrete)] uppercase tracking-wide mb-0.5">
-        {payload[0].payload.name}
+        {payload[0].payload.name ?? payload[0].payload.day}
       </p>
       <p className="font-[var(--font-mono)] text-sm font-semibold text-[var(--color-ink)]">
         {payload[0].value}
       </p>
     </div>
   );
+}
+
+function pctDelta(current: number, previous: number): { direction: 'up' | 'down'; label: string } | undefined {
+  if (previous === 0) return undefined;
+  const pct = ((current - previous) / previous) * 100;
+  return {
+    direction: pct >= 0 ? 'up' : 'down',
+    label: `${pct >= 0 ? '+' : ''}${pct.toFixed(0)}% from last month`,
+  };
 }
 
 export function ReportsPage() {
@@ -84,81 +99,147 @@ export function ReportsPage() {
 
       {data !== null && (
         <>
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <MetricCard label="Revenue this month" value={`$${data.revenueThisMonth.toFixed(2)}`} />
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <MetricCard
+              label="Revenue this month"
+              value={`$${data.revenueThisMonth.toFixed(2)}`}
+              tone="revenue"
+              icon={<DollarSign size={18} />}
+              trend={pctDelta(data.revenueThisMonth, data.revenueLastMonth)}
+            />
+            <MetricCard
+              label="Overdue work orders"
+              value={String(data.overdueCount)}
+              tone={data.overdueCount > 0 ? 'overdue' : 'completed'}
+              icon={<AlertOctagon size={18} />}
+            />
             <MetricCard
               label="QBO sync failures"
               value={String(data.pendingSyncFailures)}
               tone={data.pendingSyncFailures > 0 ? 'danger' : 'success'}
+              icon={<RefreshCw size={18} />}
             />
-            <MetricCard label="Active properties" value={String(data.topProperties.length)} tone="success" />
+            <MetricCard
+              label="Active properties"
+              value={String(data.topProperties.length)}
+              tone="total"
+              icon={<Building2 size={18} />}
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
               <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
-                Work Orders by Stage
+                Work Orders by Status
               </h2>
               {data.statusCounts.length === 0 ? (
                 <EmptyState
                   icon={<TrendingUp size={22} />}
                   title="No work orders yet"
-                  description="Stage breakdown will appear once work orders start moving through the pipeline."
+                  description="Status breakdown will appear once work orders start moving through the pipeline."
                 />
               ) : (
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart
-                    data={data.statusCounts.map((s) => ({
-                      name: STATUS_LABELS[s.status] ?? s.status,
-                      count: s.count,
-                      status: s.status,
-                    }))}
-                    layout="vertical"
-                    margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
-                    <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={90} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper)' }} />
-                    <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                      {data.statusCounts.map((s, i) => (
-                        <Cell key={i} fill={statusHex(s.status)} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="flex items-center gap-6">
+                  <ResponsiveContainer width="55%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={data.statusCounts.map((s) => ({ name: STATUS_LABELS[s.status] ?? s.status, value: s.count, status: s.status }))}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={55}
+                        outerRadius={85}
+                        paddingAngle={2}
+                      >
+                        {data.statusCounts.map((s, i) => (
+                          <Cell key={i} fill={statusHex(s.status)} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<ChartTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex-1 space-y-2">
+                    {data.statusCounts.map((s) => {
+                      const total = data.statusCounts.reduce((sum, x) => sum + x.count, 0);
+                      const pct = total > 0 ? Math.round((s.count / total) * 100) : 0;
+                      return (
+                        <div key={s.status} className="flex items-center gap-2 text-xs">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: statusHex(s.status) }} />
+                          <span className="text-[var(--color-ink-soft)] truncate">{STATUS_LABELS[s.status] ?? s.status}</span>
+                          <span className="ml-auto font-[var(--font-mono)] text-[var(--color-concrete)]">
+                            {s.count} ({pct}%)
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
 
             <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
-              <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
-                Top Properties by Volume
-              </h2>
-              {data.topProperties.length === 0 ? (
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)]">
+                  Revenue Overview
+                </h2>
+                <span className="text-xs text-[var(--color-concrete)]">Last 30 days</span>
+              </div>
+              <p className="font-[var(--font-mono)] text-2xl font-bold text-[var(--color-ink)] mb-4">
+                ${data.revenueThisMonth.toFixed(2)}
+              </p>
+              {data.revenueTrend.every((r) => r.total === 0) ? (
                 <EmptyState
-                  icon={<Building2 size={22} />}
-                  title="No properties yet"
-                  description="Property volume rankings will show up here once work orders come in."
+                  icon={<DollarSign size={22} />}
+                  title="No billed revenue yet"
+                  description="The trend line will fill in once work orders reach billing_approved or invoiced."
                 />
               ) : (
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart
-                    data={data.topProperties.map((p) => ({ name: p.name, count: p.work_order_count }))}
-                    layout="vertical"
-                    margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
-                    <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={110} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper)' }} />
-                    <Bar dataKey="count" fill="var(--color-plum)" radius={[0, 4, 4, 0]} />
-                  </BarChart>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={data.revenueTrend} margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-concrete-light)" />
+                    <XAxis
+                      dataKey="day"
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(d) => new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      interval={6}
+                    />
+                    <YAxis tick={{ fontSize: 11 }} width={48} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Line type="monotone" dataKey="total" stroke="var(--color-chip-revenue)" strokeWidth={2} dot={false} />
+                  </LineChart>
                 </ResponsiveContainer>
               )}
             </div>
+          </div>
+
+          <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
+            <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
+              Top Properties by Volume
+            </h2>
+            {data.topProperties.length === 0 ? (
+              <EmptyState
+                icon={<Building2 size={22} />}
+                title="No properties yet"
+                description="Property volume rankings will show up here once work orders come in."
+              />
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart
+                  data={data.topProperties.map((p) => ({ name: p.name, count: p.work_order_count }))}
+                  layout="vertical"
+                  margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
+                  <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={110} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper)' }} />
+                  <Bar dataKey="count" fill="var(--color-plum)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </>
       )}
     </div>
   );
 }
+

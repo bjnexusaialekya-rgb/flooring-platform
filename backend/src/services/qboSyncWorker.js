@@ -1,13 +1,13 @@
 const axios = require('axios');
 const { pool } = require('../db/pool');
-const { getValidAccessToken } = require('./qboTokenManager');
+const { getValidAccessToken, getActiveRealmId } = require('./qboTokenManager');
 
 function escapeQboString(value) {
   return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
-async function qboQuery(accessToken, query) {
-  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${process.env.QBO_REALM_ID}/query`;
+async function qboQuery(accessToken, realmId, query) {
+  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${realmId}/query`;
   const res = await axios.get(endpoint, {
     params: { query },
     headers: {
@@ -23,17 +23,18 @@ async function qboQuery(accessToken, query) {
 // name, on invoice lines. This looks the record up first and creates
 // it on the fly if missing, so the sandbox "fills itself in" as real
 // batches get synced.
-async function findOrCreateCustomer(accessToken, corporateName) {
+async function findOrCreateCustomer(accessToken, realmId, corporateName) {
   const safeName = escapeQboString(corporateName);
   const found = await qboQuery(
     accessToken,
+    realmId,
     `SELECT Id FROM Customer WHERE DisplayName = '${safeName}'`
   );
   if (found.Customer && found.Customer.length > 0) {
     return found.Customer[0].Id;
   }
 
-  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${process.env.QBO_REALM_ID}/customer`;
+  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${realmId}/customer`;
   const created = await axios.post(
     endpoint,
     { DisplayName: corporateName },
@@ -48,32 +49,37 @@ async function findOrCreateCustomer(accessToken, corporateName) {
   return created.data.Customer.Id;
 }
 
-let cachedIncomeAccountId = null;
-async function getIncomeAccountId(accessToken) {
-  if (cachedIncomeAccountId) return cachedIncomeAccountId;
+// Keyed by realmId rather than a single module-level value — a
+// reconnect to a different QBO company (new realm) must not reuse a
+// cached Income account Id from the previous company.
+const cachedIncomeAccountIdByRealm = {};
+async function getIncomeAccountId(accessToken, realmId) {
+  if (cachedIncomeAccountIdByRealm[realmId]) return cachedIncomeAccountIdByRealm[realmId];
   const result = await qboQuery(
     accessToken,
+    realmId,
     `SELECT Id FROM Account WHERE AccountType = 'Income' MAXRESULTS 1`
   );
   if (!result.Account || result.Account.length === 0) {
     throw new Error('No Income account found in QBO sandbox — cannot create Item');
   }
-  cachedIncomeAccountId = result.Account[0].Id;
-  return cachedIncomeAccountId;
+  cachedIncomeAccountIdByRealm[realmId] = result.Account[0].Id;
+  return cachedIncomeAccountIdByRealm[realmId];
 }
 
-async function findOrCreateItem(accessToken, sku, materialName) {
+async function findOrCreateItem(accessToken, realmId, sku, materialName) {
   const safeSku = escapeQboString(sku);
   const found = await qboQuery(
     accessToken,
+    realmId,
     `SELECT Id FROM Item WHERE Name = '${safeSku}'`
   );
   if (found.Item && found.Item.length > 0) {
     return found.Item[0].Id;
   }
 
-  const incomeAccountId = await getIncomeAccountId(accessToken);
-  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${process.env.QBO_REALM_ID}/item`;
+  const incomeAccountId = await getIncomeAccountId(accessToken, realmId);
+  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${realmId}/item`;
   const created = await axios.post(
     endpoint,
     {
@@ -143,17 +149,20 @@ async function syncBatchToQuickBooks(batchId) {
 
   let invoicePayload;
   try {
-    const accessToken = await getValidAccessToken(process.env.QBO_REALM_ID);
+    // Resolve the connected company from the DB, not a static env var
+    // — see getActiveRealmId's doc comment for why this was broken.
+    const realmId = await getActiveRealmId();
+    const accessToken = await getValidAccessToken(realmId);
 
     // Resolve real QBO internal Ids before building the payload —
     // QBO rejects name-only refs with an opaque NumberFormatException
     // when the sandbox has no matching record yet.
-    const customerId = await findOrCreateCustomer(accessToken, compiled.rows[0].corporate_name);
+    const customerId = await findOrCreateCustomer(accessToken, realmId, compiled.rows[0].corporate_name);
 
     const itemIdBySku = {};
     for (const row of compiled.rows) {
       if (!itemIdBySku[row.sku]) {
-        itemIdBySku[row.sku] = await findOrCreateItem(accessToken, row.sku, row.material_name);
+        itemIdBySku[row.sku] = await findOrCreateItem(accessToken, realmId, row.sku, row.material_name);
       }
     }
 
@@ -174,7 +183,7 @@ async function syncBatchToQuickBooks(batchId) {
       CustomerRef: { value: customerId },
     };
 
-    const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${process.env.QBO_REALM_ID}/invoice`;
+    const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${realmId}/invoice`;
 
     const qboResponse = await axios.post(endpoint, invoicePayload, {
       headers: {
@@ -204,8 +213,9 @@ async function syncBatchToQuickBooks(batchId) {
 }
 
 async function markQboInvoicePaid(qboInvoiceId, amountPaid) {
-  const accessToken = await getValidAccessToken(process.env.QBO_REALM_ID);
-  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${process.env.QBO_REALM_ID}/payment`;
+  const realmId = await getActiveRealmId();
+  const accessToken = await getValidAccessToken(realmId);
+  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${realmId}/payment`;
 
   await axios.post(
     endpoint,

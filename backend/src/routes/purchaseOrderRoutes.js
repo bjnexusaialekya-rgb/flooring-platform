@@ -17,14 +17,16 @@ router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT
-          po.id, po.status, po.created_at, po.created_by,
+          po.id, po.status, po.created_at, po.created_by, po.vendor_id,
           u.display_name AS created_by_name,
+          v.name AS vendor_name,
           COUNT(poli.id) AS line_item_count,
           COALESCE(SUM(poli.quantity * poli.unit_cost), 0) AS total_cost
        FROM purchase_orders po
        LEFT JOIN purchase_order_line_items poli ON poli.purchase_order_id = po.id
        LEFT JOIN users u ON u.id = po.created_by
-       GROUP BY po.id, u.display_name
+       LEFT JOIN vendors v ON v.id = po.vendor_id
+       GROUP BY po.id, u.display_name, v.name
        ORDER BY po.created_at DESC`
     );
     return res.status(200).json(result.rows);
@@ -37,9 +39,11 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const poRes = await pool.query(
-      `SELECT po.id, po.status, po.created_at, po.created_by, u.display_name AS created_by_name
+      `SELECT po.id, po.status, po.created_at, po.created_by, po.vendor_id,
+              u.display_name AS created_by_name, v.name AS vendor_name
        FROM purchase_orders po
        LEFT JOIN users u ON u.id = po.created_by
+       LEFT JOIN vendors v ON v.id = po.vendor_id
        WHERE po.id = $1`,
       [req.params.id]
     );
@@ -65,7 +69,7 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { lineItems } = req.body;
+  const { lineItems, vendorId } = req.body;
   if (!Array.isArray(lineItems) || lineItems.length === 0) {
     return res.status(400).json({ error: 'lineItems array is required' });
   }
@@ -79,8 +83,8 @@ router.post('/', async (req, res) => {
   try {
     await client.query('BEGIN');
     const poRes = await client.query(
-      `INSERT INTO purchase_orders (created_by, status) VALUES ($1, 'draft') RETURNING id, status, created_at`,
-      [req.user.userId]
+      `INSERT INTO purchase_orders (created_by, status, vendor_id) VALUES ($1, 'draft', $2) RETURNING id, status, created_at, vendor_id`,
+      [req.user.userId, vendorId || null]
     );
     const poId = poRes.rows[0].id;
 

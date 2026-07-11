@@ -105,4 +105,34 @@ async function getValidAccessToken(realmId) {
   return response.data.access_token;
 }
 
-module.exports = { exchangeAuthCode, getValidAccessToken };
+/**
+ * Resolves which QuickBooks company (realm) this app is currently
+ * connected to, by reading qbo_tokens directly instead of trusting a
+ * static QBO_REALM_ID env var.
+ *
+ * This was the actual bug blocking sync: the OAuth callback in
+ * qboRoutes.js stores tokens under whatever realmId Intuit assigns at
+ * connect time (correct — that's dynamic per-connection data), but
+ * every downstream sync call in qboSyncWorker.js was reading a
+ * separate, manually-set env var that's blank by default. A
+ * successful "Connect to QuickBooks" click still didn't make sync
+ * work unless someone also hand-copied the realm ID into .env and
+ * restarted the server.
+ *
+ * This app connects to one QuickBooks company at a time (per the
+ * RFP), so "the realm with the most recently updated tokens" is
+ * unambiguous and needs no extra config.
+ */
+async function getActiveRealmId() {
+  const result = await pool.query(
+    `SELECT realm_id FROM qbo_tokens ORDER BY updated_at DESC LIMIT 1`
+  );
+  if (result.rows.length === 0) {
+    throw new Error(
+      'QuickBooks is not connected yet — an admin must complete the OAuth connect flow (GET /qbo/connect-url) first.'
+    );
+  }
+  return result.rows[0].realm_id;
+}
+
+module.exports = { exchangeAuthCode, getValidAccessToken, getActiveRealmId };

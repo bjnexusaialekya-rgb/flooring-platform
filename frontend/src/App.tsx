@@ -16,6 +16,8 @@ import { ClientBillingPage } from './pages/ClientBillingPage';
 import { AddClientPage } from './pages/AddClientPage';
 import { AddCompanyPage } from './pages/AddCompanyPage';
 import { AdminPaymentDashboardPage } from './pages/AdminPaymentDashboardPage';
+import { InstallersPage } from './pages/InstallersPage';
+import { VendorsPage } from './pages/VendorsPage';
 
 function ProtectedRoutes({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -76,6 +78,22 @@ export default function App() {
               element={
                 <RoleGuard roles={['staff', 'admin']}>
                   <PurchaseOrdersPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/installers"
+              element={
+                <RoleGuard roles={['staff', 'admin']}>
+                  <InstallersPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/vendors"
+              element={
+                <RoleGuard roles={['staff', 'admin']}>
+                  <VendorsPage />
                 </RoleGuard>
               }
             />
