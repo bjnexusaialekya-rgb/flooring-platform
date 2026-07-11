@@ -424,22 +424,22 @@ export function WorkOrdersListPage() {
                     <td className="px-5 py-4 font-mono text-xs">
                       <Link
                         to={`/work-orders/${wo.id}`}
-                        className="text-[#0a0a0a] font-bold"
+                        className="text-[var(--color-link)] font-semibold hover:underline"
                       >
                         {wo.po_number ?? wo.id.slice(0, 8)}
                       </Link>
                     </td>
                     {isStaffOrAdmin && (
-                      <td className="px-5 py-4 text-[var(--color-ink)]">{wo.customer_name ?? '—'}</td>
+                      <td className="px-5 py-4 text-[#0a0a0a] font-semibold">{wo.customer_name ?? '—'}</td>
                     )}
-                    <td className="px-5 py-4 text-[var(--color-ink-soft)]">
+                    <td className="px-5 py-4 text-[#0a0a0a] font-semibold">
                       {wo.property_name ?? '—'}
                       {wo.street_address && (
                         <div className="text-xs text-[var(--color-concrete)]">{wo.street_address}</div>
                       )}
                     </td>
                     {isStaffOrAdmin && (
-                      <td className="px-5 py-4 text-[var(--color-ink-soft)]">{wo.installer_name ?? '—'}</td>
+                      <td className="px-5 py-4 text-[#0a0a0a] font-semibold">{wo.installer_name ?? '—'}</td>
                     )}
                     <td className="px-5 py-4">
                       {wo.target_turn_date && !isNaN(new Date(wo.target_turn_date).getTime()) ? (
@@ -466,7 +466,7 @@ export function WorkOrdersListPage() {
                           : '—'}
                       </td>
                     )}
-                    <td className="px-5 py-4 text-[var(--color-concrete)]">
+                    <td className="px-5 py-4 text-[#0a0a0a] font-semibold">
                       {new Date(wo.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-5 py-4 text-right">
