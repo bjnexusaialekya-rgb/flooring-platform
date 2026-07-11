@@ -158,7 +158,7 @@ export function AppShell() {
                 marks use --color-accent-on-dark instead. */}
             Trestle<span className="text-[var(--color-accent-on-dark)]">.</span>
           </div>
-          <div className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">
+          <div className="text-xs text-white/75 mt-0.5 uppercase tracking-wide">
             {user.role} portal
           </div>
         </div>
@@ -167,7 +167,7 @@ export function AppShell() {
           {navGroups.map((section, gi) => (
             <div key={section.group ?? gi}>
               {section.group && (
-                <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/35">
+                <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/70">
                   {section.group}
                 </div>
               )}
@@ -184,7 +184,7 @@ export function AppShell() {
                           'relative flex items-center gap-2.5 pl-3 pr-3 py-2 rounded-md text-sm transition-colors',
                           isActive
                             ? 'bg-[#d4b83a] text-[#1f2430] font-semibold'
-                            : 'text-white/60 font-medium hover:bg-white/5 hover:text-white/90',
+                            : 'text-white/80 font-medium hover:bg-white/5 hover:text-white/95',
                         ].join(' ')
                       }
                     >
@@ -200,10 +200,10 @@ export function AppShell() {
 
         <div className="px-5 py-4 border-t border-white/10 flex-shrink-0">
           <div className="text-sm font-medium truncate">{user.displayName}</div>
-          <div className="text-xs text-white/50 truncate mb-3">{user.email}</div>
+          <div className="text-xs text-white/75 truncate mb-3">{user.email}</div>
           <button
             onClick={logout}
-            className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white"
+            className="flex items-center gap-1.5 text-xs text-white/80 hover:text-white"
           >
             <LogOut size={13} />
             Sign out

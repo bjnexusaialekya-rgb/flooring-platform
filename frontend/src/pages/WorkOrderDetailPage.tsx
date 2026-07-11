@@ -310,7 +310,7 @@ export function WorkOrderDetailPage() {
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-amber-dark)]/70 border-b border-[var(--color-amber)]/30">
+                  <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-amber-dark)] border-b border-[var(--color-amber)]/30">
                     <th className="pb-2 pl-6 font-medium">Room</th>
                     <th className="pb-2 font-medium">Unit Price Charged</th>
                     <th className="pb-2 font-medium">Internal Cost Basis</th>
@@ -334,7 +334,7 @@ export function WorkOrderDetailPage() {
                           placeholder="0.00"
                         />
                       </td>
-                      <td className="py-2.5 font-mono text-xs text-[var(--color-amber-dark)]/70">
+                      <td className="py-2.5 font-mono text-xs text-[var(--color-amber-dark)]">
                         {li.internal_cost_basis ?? '—'}
                       </td>
                       <td className="py-2.5 pr-6">

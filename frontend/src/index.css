@@ -73,16 +73,26 @@
      Never reused for branding or a client-visible status pill. */
   --color-amber: #c17f3e;
   --color-amber-soft: #f7ecdf;
-  --color-amber-dark: #96602c;
+  /* Darkened ~0.93x from the raw sample — the original #96602c measured
+     4.50:1 on --color-amber-soft, a razor-thin/borderline AA pass with no
+     margin for rendering variance. This clears 5.04:1. */
+  --color-amber-dark: #8c5929;
 
   /* Status system — re-hued to the reference dashboard's chip
      palette. Kept as -soft/-solid pairs; this pattern always puts the
      solid color as TEXT on its own -soft background, never as a
      button fill with white text, so the raw sampled hues are safe
-     here unlike the CTA gradient above. */
-  --color-status-submitted: #7d8496;
+     here unlike the CTA gradient above.
+
+     submitted/priced/billing below are darkened ~0.7-0.8x from the raw
+     sample (contrast-audit finding: the raw hues measured 2.89:1,
+     3.58:1, and 3.44:1 on their -soft pairing — all fail WCAG AA's
+     4.5:1 minimum for normal text, and these render as text-xs
+     font-medium pill labels, not large text, so 4.5:1 is the correct
+     bar). Darkened values clear ~5:1 each while keeping the same hue. */
+  --color-status-submitted: #595e6a;
   --color-status-submitted-soft: #dfe2ea;
-  --color-status-priced: #8a7714;
+  --color-status-priced: #706010;
   --color-status-priced-soft: #f5e8a0;
   --color-status-approved: #532aae;
   --color-status-approved-soft: #d6d4f5;
@@ -90,14 +100,18 @@
   --color-status-scheduled-soft: #c3e3f2;
   --color-status-completed: #1e5c4d;
   --color-status-completed-soft: #b9e8d4;
-  --color-status-billing: #6d5bc7;
+  --color-status-billing: #544699;
   --color-status-billing-soft: #d4cbf5;
   --color-status-invoiced: #1e5c4d;
   --color-status-invoiced-soft: #b5edd0;
 
   --color-success: #1e5c4d;
   --color-success-soft: #dcf3e9;
-  --color-danger: #c0453a;
+  /* Darkened ~0.89x — raw #c0453a measured 4.17:1 on --color-danger-soft,
+     failing AA's 4.5:1. This clears 5.01:1. Also used as a solid button
+     fill with white text (Button.tsx "destructive" variant); darkening
+     only improves that pairing's contrast, never hurts it. */
+  --color-danger: #ab3d34;
   --color-danger-soft: #f8e5e3;
 
   /* Dashboard metric-card icon chips / donut segments — distinct from
@@ -110,9 +124,23 @@
   --color-chip-revenue: #6b4fa0;
 }
 
-/* Sidebar gradient background (AppShell). */
+/* Sidebar gradient background (AppShell).
+
+   Contrast-audit finding: the raw brand gradient's light end
+   (--color-sidebar-end, #5aa67f) gives even solid white text only
+   2.92:1 — below WCAG AA's 4.5:1, and no amount of raising text
+   opacity can fix that on its own (opacity caps the max achievable
+   contrast independent of how dark the background is). A dark scrim
+   layered underneath the text (progressively stronger toward the
+   bottom, where the gradient is lightest) fixes this while keeping
+   the brand gradient's hue visible. Paired with the opacity floor
+   raised in AppShell.tsx (was 35/50/60%, now 70/75/80% minimum),
+   every text color in the sidebar clears 4.5:1 at every scroll
+   position — verified by contrast calculation. */
 .app-sidebar {
-  background: linear-gradient(180deg, var(--color-sidebar-start) 0%, var(--color-sidebar-end) 100%);
+  background-image:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.55) 100%),
+    linear-gradient(180deg, var(--color-sidebar-start) 0%, var(--color-sidebar-end) 100%);
 }
 
 /* CTA gradient button — contrast-verified, see token comment above.

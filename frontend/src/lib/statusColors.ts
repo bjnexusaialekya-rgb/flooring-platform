@@ -29,14 +29,20 @@ export const STATUS_PILL_CLASSES: Record<string, string> = {
 // (Recharts bar fills) where a CSS var string won't resolve the way it
 // does in a className. Values match the *-soft pairing's ink tone in
 // index.css exactly, so a bar and its pill are visually identical.
+// Contrast-audit fix: 5 of these 7 had drifted out of sync with the actual
+// index.css token values (pending_review and billing_approved were the only
+// two that genuinely matched), which silently broke the bar/pill parity this
+// file's header comment promises. Corrected to mirror index.css exactly —
+// including the 3 values darkened there for WCAG AA pill-text contrast, so
+// bar and pill still read as the same color after that fix.
 export const STATUS_HEX: Record<string, string> = {
-  pending_review: '#7d8496', // --color-status-submitted
-  priced: '#0e8fa0',         // --color-status-priced
-  approved: '#5b5fc7',       // --color-status-approved
-  scheduled: '#2f7fb8',      // --color-status-scheduled
-  completed: '#1a8a6e',      // --color-status-completed
-  billing_approved: '#6d5bc7', // --color-status-billing
-  invoiced: '#2f9e6f',       // --color-status-invoiced
+  pending_review: '#595e6a',   // --color-status-submitted
+  priced: '#706010',           // --color-status-priced
+  approved: '#532aae',         // --color-status-approved
+  scheduled: '#115256',        // --color-status-scheduled
+  completed: '#1e5c4d',        // --color-status-completed
+  billing_approved: '#544699', // --color-status-billing
+  invoiced: '#1e5c4d',         // --color-status-invoiced
 };
 
 export function statusLabel(status: string): string {
