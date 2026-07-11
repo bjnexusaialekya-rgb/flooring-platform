@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { FileText } from 'lucide-react';
-import { api } from '../lib/api';
+import { api, downloadFile } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { Button } from '../components/Button';
 
@@ -305,9 +305,20 @@ export function BillingPage() {
                     </span>
                   </td>
                   <td className="py-2.5 pr-6">
-                    <Button variant="ghost" onClick={() => setCreatedBatchId(b.id)} className="!px-0 !py-0 !bg-transparent text-[var(--color-link)] hover:underline">
-                      Open
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      <Button variant="ghost" onClick={() => setCreatedBatchId(b.id)} className="!px-0 !py-0 !bg-transparent text-[var(--color-link)] hover:underline">
+                        Open
+                      </Button>
+                      {b.qbo_invoice_id && (
+                        <Button
+                          variant="ghost"
+                          onClick={() => downloadFile(`/qbo/batches/${b.id}/pdf`, `Invoice-${b.qbo_invoice_id}.pdf`)}
+                          className="!px-0 !py-0 !bg-transparent text-[var(--color-link)] hover:underline"
+                        >
+                          Download PDF
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

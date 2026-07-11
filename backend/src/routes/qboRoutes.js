@@ -113,4 +113,27 @@ router.post('/sync-failures/:id/retry', async (req, res) => {
   }
 });
 
+
+/**
+ * GET /qbo/batches/:id/pdf
+ * Immediate, on-demand invoice PDF download — no email required.
+ * Fetches the real PDF QuickBooks generated for this batch's invoice.
+ */
+router.get('/batches/:id/pdf', async (req, res) => {
+  try {
+    const { downloadInvoicePdf } = require('../services/qboSyncWorker');
+    const batchRes = await pool.query('SELECT qbo_invoice_id FROM billing_batches WHERE id = $1', [req.params.id]);
+    if (batchRes.rows.length === 0 || !batchRes.rows[0].qbo_invoice_id) {
+      return res.status(404).json({ error: 'No synced QuickBooks invoice found for this batch' });
+    }
+    const pdfBuffer = await downloadInvoicePdf(batchRes.rows[0].qbo_invoice_id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Invoice-${batchRes.rows[0].qbo_invoice_id}.pdf"`);
+    return res.status(200).send(pdfBuffer);
+  } catch (err) {
+    console.error('PDF download error:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch invoice PDF from QuickBooks' });
+  }
+});
+
 module.exports = router;

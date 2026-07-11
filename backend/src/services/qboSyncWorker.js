@@ -238,4 +238,15 @@ async function markQboInvoicePaid(qboInvoiceId, amountPaid) {
   );
 }
 
-module.exports = { syncBatchToQuickBooks, markQboInvoicePaid };
+async function downloadInvoicePdf(qboInvoiceId) {
+  const realmId = await getActiveRealmId();
+  const accessToken = await getValidAccessToken(realmId);
+  const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${realmId}/invoice/${qboInvoiceId}/pdf`;
+  const response = await axios.get(endpoint, {
+    headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/pdf' },
+    responseType: 'arraybuffer',
+  });
+  return Buffer.from(response.data);
+}
+
+module.exports = { syncBatchToQuickBooks, markQboInvoicePaid, downloadInvoicePdf };

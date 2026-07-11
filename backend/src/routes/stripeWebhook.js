@@ -6,15 +6,6 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const router = express.Router();
 
-// ------------------------------------------------------------------
-// CRITICAL: express.raw() must be scoped to THIS route only, and
-// must be registered BEFORE any global express.json() middleware
-// runs in server.js. If express.json() parses the body first,
-// Stripe's signature check fails on every single request — this
-// is the #1 cause of "signature verification failed" in production
-// and it fails silently in the sense that the error message never
-// points at middleware ordering as the cause.
-// ------------------------------------------------------------------
 router.post(
   '/webhooks/stripe',
   express.raw({ type: 'application/json' }),
@@ -22,47 +13,27 @@ router.post(
     const signature = req.headers['stripe-signature'];
 
     if (!process.env.STRIPE_WEBHOOK_SECRET) {
-      // Fail loud, not silent — an unset secret must never be
-      // treated as "skip verification."
       console.error('STRIPE_WEBHOOK_SECRET is not set — rejecting webhook');
       return res.status(500).send('Webhook secret not configured');
     }
 
     let event;
     try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
+      event = stripe.webhooks.constructEvent(req.body, signature, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (err) {
       console.error('Webhook signature verification failed:', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Idempotency: Stripe redelivers events on retry, and duplicate
-    // delivery is expected behavior, not an edge case. Check before
-    // doing anything, and record before processing so a crash
-    // mid-handler doesn't cause a silent double-process on next retry.
     const client = await pool.connect();
     try {
-      const existing = await client.query(
-        `SELECT id FROM processed_webhooks WHERE stripe_event_id = $1`,
-        [event.id]
-      );
+      const existing = await client.query(`SELECT id FROM processed_webhooks WHERE stripe_event_id = $1`, [event.id]);
       if (existing.rows.length > 0) {
-        // Already handled — acknowledge and stop, do not reprocess.
         return res.status(200).json({ received: true, duplicate: true });
       }
 
-      await client.query(
-        `INSERT INTO processed_webhooks (stripe_event_id) VALUES ($1)`,
-        [event.id]
-      );
+      await client.query(`INSERT INTO processed_webhooks (stripe_event_id) VALUES ($1)`, [event.id]);
 
-      // Return 200 fast; do the actual invoice/payment-status update
-      // work here or hand off to a queue. Keeping this handler light
-      // avoids Stripe's timeout-triggered retry storms.
       switch (event.type) {
         case 'payment_intent.succeeded': {
           const intent = event.data.object;
@@ -73,24 +44,57 @@ router.post(
             [intent.id]
           );
           if (updated.rows.length > 0) {
-            await client.query(
-              `UPDATE billing_batches SET batch_status = 'closed' WHERE id = $1`,
-              [updated.rows[0].billing_batch_id]
-            );
+            const billingBatchId = updated.rows[0].billing_batch_id;
+
+            await client.query(`UPDATE billing_batches SET batch_status = 'closed' WHERE id = $1`, [billingBatchId]);
+
             try {
-              const { syncBatchToQuickBooks, markQboInvoicePaid } = require('../services/qboSyncWorker');
-              const syncResult = await syncBatchToQuickBooks(updated.rows[0].billing_batch_id);
+              const { syncBatchToQuickBooks, markQboInvoicePaid, downloadInvoicePdf } = require('../services/qboSyncWorker');
+              const syncResult = await syncBatchToQuickBooks(billingBatchId);
+
               if (syncResult.qboInvoiceId) {
                 await markQboInvoicePaid(syncResult.qboInvoiceId, Number(intent.amount_received) / 100);
+
+                try {
+                  const recipientRes = await client.query(
+                    `SELECT u.email, u.display_name AS recipient_name,
+                            p.name AS property_name, bb.billing_period_start,
+                            bb.billing_period_end, bb.qbo_invoice_id
+                     FROM billing_batches bb
+                     JOIN properties p ON p.id = bb.property_id
+                     JOIN clients c ON c.id = p.client_id
+                     JOIN users u ON u.client_id = c.id AND u.role = 'client'
+                     WHERE bb.id = $1
+                     LIMIT 1`,
+                    [billingBatchId]
+                  );
+
+                  if (recipientRes.rows.length > 0) {
+                    const recipient = recipientRes.rows[0];
+                    const { sendPaymentConfirmationEmail } = require('../services/emailService');
+                    const pdfBuffer = await downloadInvoicePdf(recipient.qbo_invoice_id);
+
+                    await sendPaymentConfirmationEmail({
+                      to: recipient.email,
+                      recipientName: recipient.recipient_name,
+                      propertyName: recipient.property_name,
+                      amount: Number(intent.amount_received) / 100,
+                      billingPeriodStart: recipient.billing_period_start,
+                      billingPeriodEnd: recipient.billing_period_end,
+                      invoiceNumber: recipient.qbo_invoice_id,
+                      pdfBuffer,
+                    });
+                  } else {
+                    console.error(`No client-role user found for billing batch ${billingBatchId} — skipping payment confirmation email`);
+                  }
+                } catch (emailErr) {
+                  console.error('Payment confirmation email failed (non-fatal):', emailErr.message);
+                }
               }
             } catch (qboErr) {
               console.error('Auto QBO sync/mark-paid after payment failed:', qboErr.message);
             }
           } else {
-            // A succeeded PaymentIntent with no matching payments row
-            // is a real anomaly (created outside this app, or the
-            // insert in createStripePaymentIntent failed silently) —
-            // log it loudly rather than treating it as a no-op.
             console.error(`No payments row found for succeeded PaymentIntent ${intent.id}`);
           }
           break;
@@ -98,8 +102,7 @@ router.post(
         case 'payment_intent.payment_failed': {
           const intent = event.data.object;
           await client.query(
-            `UPDATE payments SET status = 'failed'
-             WHERE provider = 'stripe' AND provider_reference_id = $1`,
+            `UPDATE payments SET status = 'failed' WHERE provider = 'stripe' AND provider_reference_id = $1`,
             [intent.id]
           );
           break;
