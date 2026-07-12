@@ -50,7 +50,7 @@ export function TableSkeleton({ columns = 5, rows = 4 }: { columns?: number; row
 // work-order STATUS_* tokens in statusColors.ts on purpose (a "Total"
 // or "Revenue" metric card isn't a work-order status) — see the
 // --color-chip-* block in index.css.
-export type MetricTone = 'default' | 'total' | 'progress' | 'overdue' | 'completed' | 'revenue' | 'danger' | 'success';
+export type MetricTone = 'default' | 'total' | 'progress' | 'overdue' | 'completed' | 'revenue' | 'danger' | 'success' | 'secondary';
 
 const TONE_CHIP_VAR: Record<MetricTone, string> = {
   default: 'var(--color-ink-soft)',
@@ -61,6 +61,7 @@ const TONE_CHIP_VAR: Record<MetricTone, string> = {
   revenue: 'var(--color-chip-revenue)',
   danger: 'var(--color-danger)',
   success: 'var(--color-success)',
+  secondary: 'var(--color-chip-secondary)',
 };
 
 const TONE_VALUE_CLASS: Record<MetricTone, string> = {
@@ -72,6 +73,7 @@ const TONE_VALUE_CLASS: Record<MetricTone, string> = {
   revenue: 'text-[#0a0a0a]',
   danger: 'text-[var(--color-danger)]',
   success: 'text-[var(--color-success)]',
+  secondary: 'text-[#0a0a0a]',
 };
 
 export function MetricCard({

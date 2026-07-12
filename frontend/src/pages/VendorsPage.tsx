@@ -140,7 +140,7 @@ export function VendorsPage() {
       {vendors !== null && vendors.length > 0 && (
         <div className="grid grid-cols-2 gap-4 mb-6">
           <MetricCard label="Active vendors" value={String(activeCount)} tone="total" icon={<Store size={18} />} />
-          <MetricCard label="Total spend" value={`$${totalSpend.toFixed(2)}`} tone="revenue" />
+          <MetricCard label="Total spend" value={`$${totalSpend.toFixed(2)}`} tone="secondary" />
         </div>
       )}
 

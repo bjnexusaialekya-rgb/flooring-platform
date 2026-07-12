@@ -148,7 +148,7 @@ export function InstallersPage() {
       {installers !== null && installers.length > 0 && (
         <div className="grid grid-cols-2 gap-4 mb-6">
           <MetricCard label="Active installers" value={String(activeCount)} tone="total" icon={<HardHat size={18} />} />
-          <MetricCard label="Open jobs across crews" value={String(openLoad)} tone="progress" />
+          <MetricCard label="Open jobs across crews" value={String(openLoad)} tone="secondary" />
         </div>
       )}
 

@@ -599,3 +599,7 @@ input, select, textarea {
     animation: none;
   }
 }
+
+:root {
+  --color-chip-secondary: #9caf88; /* sage - dedicated 2nd-card tone, isolated from Work Orders' progress/total */
+}
