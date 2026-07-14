@@ -147,8 +147,8 @@ export function WorkOrderDetailPage() {
       setStockShortages(null);
       showSuccess(`Status advanced to ${updated.status.replace(/_/g, ' ')}`);
     } catch (err) {
-      if (err instanceof ApiRequestError && err.status === 409 && Array.isArray(err.body.stockShortages)) {
-        setStockShortages(err.body.stockShortages as StockShortage[]);
+      if (err instanceof ApiRequestError && err.status === 409 && Array.isArray(err.body.shortages)) {
+        setStockShortages(err.body.shortages as StockShortage[]);
       } else {
         showError(err instanceof Error ? err.message : 'Failed to advance status');
       }

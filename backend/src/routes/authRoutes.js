@@ -25,7 +25,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT id, email, password_hash, role, client_id, display_name, is_active
+      `SELECT id, email, password_hash, role, client_id, property_id, display_name, is_active
        FROM users WHERE email = $1`,
       [email.toLowerCase().trim()]
     );
@@ -51,6 +51,7 @@ router.post('/login', loginLimiter, async (req, res) => {
         userId: user.id,
         role: user.role,
         clientId: user.client_id,
+        propertyId: user.property_id,
         email: user.email,
       },
       process.env.JWT_SECRET,
@@ -64,6 +65,7 @@ router.post('/login', loginLimiter, async (req, res) => {
         email: user.email,
         role: user.role,
         displayName: user.display_name,
+        propertyId: user.property_id,
       },
     });
   } catch (err) {
@@ -79,7 +81,7 @@ router.post('/login', loginLimiter, async (req, res) => {
  * accidentally let this fall through unprotected.
  */
 router.post('/register', requireAuth, requireRole('admin'), async (req, res) => {
-  const { email, password, role, clientId, displayName } = req.body;
+  const { email, password, role, clientId, propertyId, displayName } = req.body;
 
   if (!email || !password || !role || !displayName) {
     return res.status(400).json({ error: 'email, password, role, displayName are required' });
@@ -94,10 +96,10 @@ router.post('/register', requireAuth, requireRole('admin'), async (req, res) => 
   try {
     const passwordHash = await bcrypt.hash(password, 12);
     const result = await pool.query(
-      `INSERT INTO users (email, password_hash, role, client_id, display_name)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, email, role, display_name`,
-      [email.toLowerCase().trim(), passwordHash, role, clientId || null, displayName]
+      `INSERT INTO users (email, password_hash, role, client_id, property_id, display_name)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, email, role, display_name, property_id`,
+      [email.toLowerCase().trim(), passwordHash, role, clientId || null, propertyId || null, displayName]
     );
     return res.status(201).json({ user: result.rows[0] });
   } catch (err) {

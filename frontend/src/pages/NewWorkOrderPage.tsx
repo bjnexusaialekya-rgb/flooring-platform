@@ -5,7 +5,7 @@ import { FloorPlanDiagram } from '../components/FloorPlanDiagram';
 import { Button } from '../components/Button';
 
 type RoomSpec = { material_sku: string; net_qty: number; waste_pct: number };
-type Template = { id: string; plan_name: string; room_manifest: Record<string, RoomSpec> };
+type Template = { id: string; plan_name: string; property_name: string; room_manifest: Record<string, RoomSpec> };
 
 export function NewWorkOrderPage() {
   const navigate = useNavigate();
@@ -89,7 +89,7 @@ export function NewWorkOrderPage() {
             <option value="">Select a template…</option>
             {templates.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.plan_name}
+                {t.property_name} — {t.plan_name}
               </option>
             ))}
           </select>

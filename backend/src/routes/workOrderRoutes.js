@@ -29,9 +29,9 @@ router.get('/', async (req, res) => {
          JOIN units u ON u.id = wo.unit_id
          JOIN buildings b ON b.id = u.building_id
          JOIN properties p ON p.id = b.property_id
-         WHERE p.client_id = $1
+         WHERE p.client_id = $1 AND ($2::uuid IS NULL OR p.id = $2)
          ORDER BY wo.created_at DESC`,
-        [req.user.clientId]
+        [req.user.clientId, req.user.propertyId || null]
       );
     } else {
       // staff/admin see the full queue across all clients, plus the
@@ -103,6 +103,11 @@ router.post('/', requireRole('client', 'staff', 'admin'), async (req, res) => {
     if (req.user.role === 'client' && req.user.clientId !== client_id) {
       await client.query('ROLLBACK');
       return res.status(403).json({ error: 'Template does not belong to your organization' });
+    }
+    // Property-scoped users may only submit against their own property's templates.
+    if (req.user.role === 'client' && req.user.propertyId && req.user.propertyId !== property_id) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'Template does not belong to your assigned property' });
     }
 
     // Find-or-create the building and unit — property managers type these
@@ -180,7 +185,7 @@ router.post('/', requireRole('client', 'staff', 'admin'), async (req, res) => {
 router.get('/:id/portal-view', async (req, res) => {
   try {
     const ownershipCheck = await pool.query(
-      `SELECT p.client_id
+      `SELECT p.client_id, p.id AS property_id
        FROM work_orders wo
        JOIN units u ON u.id = wo.unit_id
        JOIN buildings b ON b.id = u.building_id
@@ -192,6 +197,9 @@ router.get('/:id/portal-view', async (req, res) => {
       return res.status(404).json({ error: 'Work order not found' });
     }
     if (req.user.role === 'client' && req.user.clientId !== ownershipCheck.rows[0].client_id) {
+      return res.status(403).json({ error: 'Not authorized to view this work order' });
+    }
+    if (req.user.role === 'client' && req.user.propertyId && req.user.propertyId !== ownershipCheck.rows[0].property_id) {
       return res.status(403).json({ error: 'Not authorized to view this work order' });
     }
 
@@ -314,12 +322,17 @@ router.patch(
  * PATCH /work-orders/:id/status
  * Staff/admin only, enforces the locked status flow.
  */
+// NOTE: 'completed' has no manual next-status entry on purpose.
+// The completed -> billing_approved transition happens ONLY as a side
+// effect of POST /billing/consolidated-statement, which also sets
+// billing_batch_id atomically. A manual click here would silently
+// orphan the work order — it'd show billing_approved but never get
+// batched, since the batching query only matches status='completed'.
 const VALID_TRANSITIONS = {
   pending_review: ['priced'],
   priced: ['approved'],
   approved: ['scheduled'],
   scheduled: ['completed'],
-  completed: ['billing_approved'],
   billing_approved: ['invoiced'],
 };
 

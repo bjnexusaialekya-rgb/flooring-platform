@@ -16,14 +16,16 @@ router.get('/', async (req, res) => {
     let query, params;
     if (req.user.role === 'client') {
       query = `
-        SELECT ft.id, ft.plan_name, ft.room_manifest
+        SELECT ft.id, ft.plan_name, ft.room_manifest, p.name AS property_name
         FROM floor_plan_templates ft
         JOIN properties p ON p.id = ft.property_id
-        WHERE p.client_id = $1
-        ORDER BY ft.plan_name`;
-      params = [req.user.clientId];
+        WHERE p.client_id = $1 AND ($2::uuid IS NULL OR p.id = $2)
+        ORDER BY p.name, ft.plan_name`;
+      params = [req.user.clientId, req.user.propertyId || null];
     } else {
-      query = `SELECT id, plan_name, room_manifest FROM floor_plan_templates ORDER BY plan_name LIMIT 500`;
+      query = `SELECT ft.id, ft.plan_name, ft.room_manifest, p.name AS property_name
+                FROM floor_plan_templates ft JOIN properties p ON p.id = ft.property_id
+                ORDER BY p.name, ft.plan_name LIMIT 500`;
       params = [];
     }
     const result = await pool.query(query, params);

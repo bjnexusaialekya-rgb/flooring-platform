@@ -14,7 +14,12 @@ router.use(requireAuth);
 router.get('/properties', requireRole('staff', 'admin'), async (req, res) => {
   try {
     const { pool } = require('../db/pool');
-    const result = await pool.query('SELECT id, name FROM properties ORDER BY name');
+    const { clientId } = req.query;
+    const query = clientId
+      ? 'SELECT id, name FROM properties WHERE client_id = $1 ORDER BY name'
+      : 'SELECT id, name FROM properties ORDER BY name';
+    const params = clientId ? [clientId] : [];
+    const result = await pool.query(query, params);
     return res.status(200).json(result.rows);
   } catch (err) {
     console.error('List properties error:', err.message);
@@ -37,9 +42,9 @@ router.get('/', async (req, res) => {
         FROM units u
         JOIN buildings b ON b.id = u.building_id
         JOIN properties p ON p.id = b.property_id
-        WHERE p.client_id = $1
+        WHERE p.client_id = $1 AND ($2::uuid IS NULL OR p.id = $2)
         ORDER BY b.building_identifier, u.unit_number`;
-      params = [req.user.clientId];
+      params = [req.user.clientId, req.user.propertyId || null];
     } else {
       query = `
         SELECT u.id, u.unit_number, b.building_identifier

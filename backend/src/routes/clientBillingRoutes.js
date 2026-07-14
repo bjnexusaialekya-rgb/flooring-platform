@@ -25,10 +25,10 @@ router.get('/my-statements', async (req, res) => {
        JOIN properties p ON p.id = bb.property_id
        LEFT JOIN work_orders wo ON wo.billing_batch_id = bb.id
        LEFT JOIN work_order_line_items woli ON woli.work_order_id = wo.id AND woli.is_supplemental_prep = false
-       WHERE p.client_id = $1
+       WHERE p.client_id = $1 AND ($2::uuid IS NULL OR p.id = $2)
        GROUP BY bb.id, p.name
        ORDER BY bb.created_at DESC`,
-      [req.user.clientId]
+      [req.user.clientId, req.user.propertyId || null]
     );
     return res.status(200).json(result.rows);
   } catch (err) {
@@ -50,13 +50,16 @@ router.post('/pay', async (req, res) => {
   }
   try {
     const ownership = await pool.query(
-      `SELECT p.client_id FROM billing_batches bb JOIN properties p ON p.id = bb.property_id WHERE bb.id = $1`,
+      `SELECT p.client_id, p.id AS property_id FROM billing_batches bb JOIN properties p ON p.id = bb.property_id WHERE bb.id = $1`,
       [billingBatchId]
     );
     if (ownership.rows.length === 0) {
       return res.status(404).json({ error: 'Statement not found' });
     }
     if (ownership.rows[0].client_id !== req.user.clientId) {
+      return res.status(403).json({ error: 'Not authorized to pay this statement' });
+    }
+    if (req.user.propertyId && ownership.rows[0].property_id !== req.user.propertyId) {
       return res.status(403).json({ error: 'Not authorized to pay this statement' });
     }
 
