@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Layers, ArrowLeft } from 'lucide-react';
+import { Layers, ArrowLeft, Lock } from 'lucide-react';
 import { api, ApiRequestError, type WorkOrderPortalView } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { StatusPipeline } from '../components/StatusPipeline';
@@ -304,86 +304,94 @@ export function WorkOrderDetailPage() {
            boundary line. This is the visual signature — the same cut
            that the SQL SELECT enforces server-side is shown here. ---- */}
       {isStaff && (staffLoading || staffLineItems.length > 0) && (
-        <div className="boundary-line">
-          <div className="bg-[var(--color-amber-soft)] rounded-xl border border-[var(--color-amber)]/30 overflow-hidden mt-2">
-            <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-amber-dark)] px-6 pt-6 mb-4">
+        <div className="rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden mt-2
+                         border-l-4 border-l-[var(--color-amber)] bg-[var(--color-panel)]">
+          <div className="flex items-center gap-2 px-6 pt-6 mb-4">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-amber-soft)]">
+              <Lock size={11} className="text-[var(--color-amber-dark)]" />
+            </span>
+            <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)]">
               Pricing &amp; Cost Basis
             </h2>
-
-            {staffLoading ? (
-              <div className="px-6 pb-6">
-                <TableSkeleton columns={4} rows={2} />
-              </div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-amber-dark)] border-b border-[var(--color-amber)]/30">
-                    <th className="pb-2 pl-6 font-medium">Room</th>
-                    <th className="pb-2 font-medium">Unit Price Charged</th>
-                    <th className="pb-2 font-medium">Internal Cost Basis</th>
-                    <th className="pb-2 font-medium">Margin</th>
-                    <th className="pb-2 pr-6 font-medium"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {staffLineItems.map((li) => {
-                    const draft = priceDrafts[li.id];
-                    const priceForMargin = draft !== undefined ? Number(draft) : li.unit_price_charged;
-                    const margin = marginInfo(priceForMargin, li.internal_cost_basis);
-                    return (
-                      <tr key={li.id} className="border-b last:border-0 border-[var(--color-amber)]/20">
-                        <td className="py-2.5 pl-6">{li.room_name}</td>
-                        <td className="py-2.5">
-                          <input
-                            type="number"
-                            step="0.01"
-                            defaultValue={li.unit_price_charged ?? ''}
-                            onChange={(e) =>
-                              setPriceDrafts((prev) => ({ ...prev, [li.id]: e.target.value }))
-                            }
-                            className="w-24 px-2 py-1 rounded border border-[var(--color-amber)]/40 font-mono text-xs
-                                       focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]"
-                            placeholder="0.00"
-                          />
-                        </td>
-                        <td className="py-2.5 font-mono text-xs text-[var(--color-amber-dark)]">
-                          {li.internal_cost_basis ?? '—'}
-                        </td>
-                        <td className="py-2.5">
-                          {margin ? (
-                            <span
-                              className={
-                                'font-mono text-xs px-2 py-0.5 rounded-full ' +
-                                (margin.tone === 'good'
-                                  ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
-                                  : margin.tone === 'warn'
-                                  ? 'bg-[var(--color-amber)]/20 text-[var(--color-amber-dark)]'
-                                  : 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]')
-                              }
-                            >
-                              {margin.pct.toFixed(1)}%
-                            </span>
-                          ) : (
-                            <span className="text-xs text-[var(--color-concrete)]">—</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 pr-6">
-                          <Button
-                            variant="ghost"
-                            onClick={() => savePrice(li.id)}
-                            isLoading={saving === li.id}
-                            className="!text-xs !px-2 !py-1 !text-[var(--color-amber-dark)] !bg-transparent hover:!bg-[var(--color-amber)]/10"
-                          >
-                            {saving === li.id ? 'Saving…' : 'Save'}
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
+            <span className="text-[10px] uppercase tracking-wide text-[var(--color-concrete)] ml-1">
+              Staff only — not visible to client
+            </span>
           </div>
+
+          {staffLoading ? (
+            <div className="px-6 pb-6">
+              <TableSkeleton columns={4} rows={2} />
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
+                  <th className="pb-2 pl-6 font-medium">Room</th>
+                  <th className="pb-2 font-medium">Unit Price Charged</th>
+                  <th className="pb-2 font-medium">Internal Cost Basis</th>
+                  <th className="pb-2 font-medium">Margin</th>
+                  <th className="pb-2 pr-6 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {staffLineItems.map((li) => {
+                  const draft = priceDrafts[li.id];
+                  const priceForMargin = draft !== undefined ? Number(draft) : li.unit_price_charged;
+                  const margin = marginInfo(priceForMargin, li.internal_cost_basis);
+                  return (
+                    <tr key={li.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+                      <td className="py-2.5 pl-6 font-semibold text-[var(--color-ink)]">{li.room_name}</td>
+                      <td className="py-2.5">
+                        <input
+                          type="number"
+                          step="0.01"
+                          defaultValue={li.unit_price_charged ?? ''}
+                          onChange={(e) =>
+                            setPriceDrafts((prev) => ({ ...prev, [li.id]: e.target.value }))
+                          }
+                          className="w-24 px-2 py-1.5 rounded-md border border-[var(--color-concrete-light)] bg-white
+                                     font-mono text-xs shadow-sm
+                                     focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)] focus:border-[var(--color-amber)]"
+                          placeholder="0.00"
+                        />
+                      </td>
+                      <td className="py-2.5 font-mono text-xs text-[var(--color-concrete)]">
+                        {li.internal_cost_basis ?? '—'}
+                      </td>
+                      <td className="py-2.5">
+                        {margin ? (
+                          <span
+                            className={
+                              'font-mono text-xs font-semibold px-2.5 py-1 rounded-full ' +
+                              (margin.tone === 'good'
+                                ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
+                                : margin.tone === 'warn'
+                                ? 'bg-[var(--color-amber-soft)] text-[var(--color-amber-dark)]'
+                                : 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]')
+                            }
+                          >
+                            {margin.pct.toFixed(1)}%
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[var(--color-concrete)]">—</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 pr-6">
+                        <Button
+                          variant="ghost"
+                          onClick={() => savePrice(li.id)}
+                          isLoading={saving === li.id}
+                          className="!text-xs !px-2 !py-1 !text-[var(--color-concrete)] hover:!text-[var(--color-ink)]"
+                        >
+                          {saving === li.id ? 'Saving…' : 'Save'}
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
     </div>
