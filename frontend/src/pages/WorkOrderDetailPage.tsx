@@ -34,6 +34,13 @@ const NEXT_STATUS: Record<string, string> = {
   billing_approved: 'invoiced',
 };
 
+function marginInfo(price: number | null, cost: number | null) {
+  if (price === null || cost === null || price === 0) return null;
+  const pct = ((price - cost) / price) * 100;
+  const tone = pct >= 30 ? 'good' : pct >= 15 ? 'warn' : 'bad';
+  return { pct, tone };
+}
+
 type StaffMember = { id: string; display_name: string };
 
 function DetailSkeleton() {
@@ -314,41 +321,65 @@ export function WorkOrderDetailPage() {
                     <th className="pb-2 pl-6 font-medium">Room</th>
                     <th className="pb-2 font-medium">Unit Price Charged</th>
                     <th className="pb-2 font-medium">Internal Cost Basis</th>
+                    <th className="pb-2 font-medium">Margin</th>
                     <th className="pb-2 pr-6 font-medium"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {staffLineItems.map((li) => (
-                    <tr key={li.id} className="border-b last:border-0 border-[var(--color-amber)]/20">
-                      <td className="py-2.5 pl-6">{li.room_name}</td>
-                      <td className="py-2.5">
-                        <input
-                          type="number"
-                          step="0.01"
-                          defaultValue={li.unit_price_charged ?? ''}
-                          onChange={(e) =>
-                            setPriceDrafts((prev) => ({ ...prev, [li.id]: e.target.value }))
-                          }
-                          className="w-24 px-2 py-1 rounded border border-[var(--color-amber)]/40 font-mono text-xs
-                                     focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]"
-                          placeholder="0.00"
-                        />
-                      </td>
-                      <td className="py-2.5 font-mono text-xs text-[var(--color-amber-dark)]">
-                        {li.internal_cost_basis ?? '—'}
-                      </td>
-                      <td className="py-2.5 pr-6">
-                        <Button
-                          variant="ghost"
-                          onClick={() => savePrice(li.id)}
-                          isLoading={saving === li.id}
-                          className="!text-xs !px-2 !py-1 !text-[var(--color-amber-dark)] !bg-transparent hover:!bg-[var(--color-amber)]/10"
-                        >
-                          {saving === li.id ? 'Saving…' : 'Save'}
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {staffLineItems.map((li) => {
+                    const draft = priceDrafts[li.id];
+                    const priceForMargin = draft !== undefined ? Number(draft) : li.unit_price_charged;
+                    const margin = marginInfo(priceForMargin, li.internal_cost_basis);
+                    return (
+                      <tr key={li.id} className="border-b last:border-0 border-[var(--color-amber)]/20">
+                        <td className="py-2.5 pl-6">{li.room_name}</td>
+                        <td className="py-2.5">
+                          <input
+                            type="number"
+                            step="0.01"
+                            defaultValue={li.unit_price_charged ?? ''}
+                            onChange={(e) =>
+                              setPriceDrafts((prev) => ({ ...prev, [li.id]: e.target.value }))
+                            }
+                            className="w-24 px-2 py-1 rounded border border-[var(--color-amber)]/40 font-mono text-xs
+                                       focus:outline-none focus:ring-2 focus:ring-[var(--color-amber)]"
+                            placeholder="0.00"
+                          />
+                        </td>
+                        <td className="py-2.5 font-mono text-xs text-[var(--color-amber-dark)]">
+                          {li.internal_cost_basis ?? '—'}
+                        </td>
+                        <td className="py-2.5">
+                          {margin ? (
+                            <span
+                              className={
+                                'font-mono text-xs px-2 py-0.5 rounded-full ' +
+                                (margin.tone === 'good'
+                                  ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
+                                  : margin.tone === 'warn'
+                                  ? 'bg-[var(--color-amber)]/20 text-[var(--color-amber-dark)]'
+                                  : 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]')
+                              }
+                            >
+                              {margin.pct.toFixed(1)}%
+                            </span>
+                          ) : (
+                            <span className="text-xs text-[var(--color-concrete)]">—</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 pr-6">
+                          <Button
+                            variant="ghost"
+                            onClick={() => savePrice(li.id)}
+                            isLoading={saving === li.id}
+                            className="!text-xs !px-2 !py-1 !text-[var(--color-amber-dark)] !bg-transparent hover:!bg-[var(--color-amber)]/10"
+                          >
+                            {saving === li.id ? 'Saving…' : 'Save'}
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
