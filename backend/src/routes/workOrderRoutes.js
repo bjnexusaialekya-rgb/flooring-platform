@@ -138,11 +138,20 @@ router.post('/', requireRole('client', 'staff', 'admin'), async (req, res) => {
     );
     const unitId = unitRes.rows[0].id;
 
+    // Auto-generate a human-readable job number (WO-1000, WO-1001, ...)
+    // whenever the caller didn't supply their own PO number. Falls back
+    // to a dedicated sequence rather than reusing any existing id column,
+    // so manually-entered PO numbers from clients are never overwritten.
+    let resolvedPoNumber = poNumber || null;
+    if (!resolvedPoNumber) {
+      const seqRes = await client.query(`SELECT nextval('work_order_number_seq') AS n`);
+      resolvedPoNumber = `WO-${seqRes.rows[0].n}`;
+    }
     const woRes = await client.query(
       `INSERT INTO work_orders (unit_id, floor_plan_template_id, submitted_by, po_number, target_turn_date, billing_contact, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'pending_review')
-       RETURNING id, status, created_at`,
-      [unitId, floorPlanTemplateId, req.user.userId, poNumber || null, targetTurnDate || null, billingContact || null]
+       RETURNING id, status, created_at, po_number`,
+      [unitId, floorPlanTemplateId, req.user.userId, resolvedPoNumber, targetTurnDate || null, billingContact || null]
     );
     const workOrderId = woRes.rows[0].id;
 
