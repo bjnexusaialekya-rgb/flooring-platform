@@ -63,17 +63,20 @@ function ChartTooltip({ active, payload }: any) {
 
 // Rotating gradient palette for the "Top Properties" bars — one distinct
 // hue per bar, each rendered as a light-to-bright horizontal gradient.
-// Previously this pulled from shared design tokens, but --color-status-priced
-// (used as "teal") is actually #8a7714 — an olive/mustard color, not teal —
-// so bar #2 always rendered wrong regardless of caching. Switching to
-// dedicated gradient stops defined below avoids reusing status tokens for
-// an unrelated purpose. A 6th+ property wraps back to the first gradient.
+//
+// Previously this used 5 arbitrary hues (blue/pink/green/purple/orange)
+// pulled from nowhere in particular — a generic chart-library rainbow that
+// visually clashed with the rest of the app's cream/lime/green palette.
+// Replaced with a single-family gradient set (lime -> forest green,
+// varying lightness/saturation) so the busiest chart on the dashboard
+// reads as part of the same product instead of a bolted-on chart widget.
+// A 6th+ property wraps back to the first gradient.
 const PROPERTY_BAR_GRADIENTS = [
-  { id: 'propBarBlue', from: '#a8dff5', to: '#0e93d8' },
-  { id: 'propBarPink', from: '#f2a0a0', to: '#e8375a' },
-  { id: 'propBarGreen', from: '#b7e07a', to: '#3aa72e' },
-  { id: 'propBarPurple', from: '#d9a8e0', to: '#a83fc0' },
-  { id: 'propBarOrange', from: '#f5c98a', to: '#e8821f' },
+  { id: 'propBarLime', from: '#d4e896', to: '#8fae2e' },
+  { id: 'propBarForest', from: '#9fc98a', to: '#3a7d3e' },
+  { id: 'propBarOlive', from: '#e0d191', to: '#a68a2c' },
+  { id: 'propBarSage', from: '#bcd3a8', to: '#5c8a4f' },
+  { id: 'propBarMoss', from: '#c8dba0', to: '#6b8f3a' },
 ];
 
 function pctDelta(current: number, previous: number): { direction: 'up' | 'down'; label: string } | undefined {
@@ -277,4 +280,3 @@ export function ReportsPage() {
     </div>
   );
 }
-

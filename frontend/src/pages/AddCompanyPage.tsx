@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { api } from '../lib/api';
-import { Building2, MapPin } from 'lucide-react';
+import { Building2, MapPin, Check, ImagePlus } from 'lucide-react';
 import { Button } from '../components/Button';
 
 type ClientOption = { id: string; corporate_name: string };
@@ -17,6 +17,12 @@ export function AddCompanyPage() {
   const [companyResult, setCompanyResult] = useState<string | null>(null);
   const [companyError, setCompanyError] = useState<string | null>(null);
   const [creatingCompany, setCreatingCompany] = useState(false);
+
+  // Logo upload is UI-only for now — no backend endpoint exists yet to
+  // store/serve a company logo, so this stays local state and is not sent
+  // in handleCreateCompany's POST body. Wire this up once a
+  // POST /admin-setup/clients/:id/logo (or similar) route exists.
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [clientId, setClientId] = useState('');
@@ -41,6 +47,14 @@ export function AddCompanyPage() {
   useEffect(() => {
     loadClients();
   }, []);
+
+  function handleLogoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setLogoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  }
 
   async function handleCreateCompany(e: FormEvent) {
     e.preventDefault();
@@ -106,11 +120,46 @@ export function AddCompanyPage() {
     'transition-shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]';
   const labelClass = 'block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5';
 
+  const step1Done = companyResult !== null;
+
   return (
-    <div className="max-w-lg space-y-8">
+    <div className="max-w-lg">
+      {/* Wizard progress: a connecting line between the two step circles,
+          filling in green once step 1 completes, plus a checkmark
+          replacing the "1" glyph — makes this read as a real multi-step
+          flow instead of two independently-numbered section headers. */}
+      <div className="relative mb-8">
+        <div className="flex items-center">
+          <span
+            className={[
+              'flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 transition-colors',
+              step1Done
+                ? 'bg-[var(--color-success)] text-white'
+                : 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]',
+            ].join(' ')}
+          >
+            {step1Done ? <Check size={13} /> : '1'}
+          </span>
+          <div className="flex-1 mx-2 h-0.5 rounded-full bg-[var(--color-concrete-light)] overflow-hidden">
+            <div
+              className={[
+                'h-full bg-[var(--color-success)] transition-all duration-500',
+                step1Done ? 'w-full' : 'w-0',
+              ].join(' ')}
+            />
+          </div>
+          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-xs font-semibold shrink-0">
+            2
+          </span>
+        </div>
+        <div className="flex justify-between mt-1.5 text-[10px] uppercase tracking-wide text-[var(--color-concrete)]">
+          <span>Company</span>
+          <span>Property</span>
+        </div>
+      </div>
+
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-xs font-semibold">1</span>
           <h1 className="font-[var(--font-display)] text-2xl font-semibold text-[var(--color-ink)]">
             Add Company
           </h1>
@@ -125,6 +174,23 @@ export function AddCompanyPage() {
           <div className="flex items-center gap-2 pb-2 mb-2 border-b border-[var(--color-concrete-light)]">
             <Building2 size={16} className="text-[var(--color-primary)]" />
             <span className="text-sm font-medium text-[var(--color-ink)]">Company Details</span>
+          </div>
+
+          <div>
+            <label className={labelClass}>Company Logo <span className="text-[var(--color-concrete)] font-normal">(optional)</span></label>
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-lg border border-dashed border-[var(--color-concrete-light)] bg-[var(--color-paper)] flex items-center justify-center shrink-0 overflow-hidden">
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Company logo preview" className="w-full h-full object-cover" />
+                ) : (
+                  <ImagePlus size={18} className="text-[var(--color-concrete)]" />
+                )}
+              </div>
+              <label className="text-xs font-medium text-[var(--color-link)] hover:underline cursor-pointer">
+                {logoPreview ? 'Change logo' : 'Upload logo'}
+                <input type="file" accept="image/*" onChange={handleLogoSelect} className="hidden" />
+              </label>
+            </div>
           </div>
 
           <div>
@@ -242,9 +308,8 @@ export function AddCompanyPage() {
         </form>
       </div>
 
-      <div>
+      <div className="mt-8">
         <div className="flex items-center gap-2 mb-1">
-          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-xs font-semibold">2</span>
           <h2 className="font-[var(--font-display)] text-xl font-semibold text-[var(--color-ink)]">
             Add Property
           </h2>

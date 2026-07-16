@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react';
+import { Home, Globe2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { Button } from '../components/Button';
 
@@ -70,6 +71,13 @@ export function AddClientPage() {
     }
   }
 
+  const selectedCompany = clients.find((c) => c.id === clientId);
+  const selectedProperty = properties.find((p) => p.id === propertyId);
+  // Access preview is shown as soon as a company is picked, before submit —
+  // makes the scope this login is about to receive explicit rather than
+  // something the admin has to infer from two independent dropdowns.
+  const showPreview = !!selectedCompany;
+
   return (
     <div className="max-w-lg">
       <h1 className="font-[var(--font-display)] text-2xl font-semibold text-[var(--color-ink)] mb-1">
@@ -126,6 +134,24 @@ export function AddClientPage() {
             ))}
           </select>
         </div>
+
+        {showPreview && (
+          <div className="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary-soft)] px-3 py-2.5 flex items-start gap-2.5">
+            {propertyId ? (
+              <Home size={15} className="text-[var(--color-primary)] mt-0.5 shrink-0" />
+            ) : (
+              <Globe2 size={15} className="text-[var(--color-primary)] mt-0.5 shrink-0" />
+            )}
+            <p className="text-xs text-[var(--color-ink)] leading-relaxed">
+              <span className="font-semibold">This login will access:</span>{' '}
+              {propertyId && selectedProperty
+                ? <>only <span className="font-semibold">{selectedProperty.name}</span> at {selectedCompany?.corporate_name}</>
+                : <>every property under <span className="font-semibold">{selectedCompany?.corporate_name}</span> (company-wide)</>
+              }
+            </p>
+          </div>
+        )}
+
         {error && <div className="text-sm text-[var(--color-danger)] bg-[var(--color-danger-soft)] rounded-md px-3 py-2">{error}</div>}
         {result && <div className="text-sm text-[var(--color-success)] bg-[var(--color-success-soft)] rounded-md px-3 py-2">{result}</div>}
         <Button type="submit" isLoading={submitting} className="w-full">

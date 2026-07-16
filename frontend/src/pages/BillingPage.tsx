@@ -61,7 +61,7 @@ function StripeCheckoutForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function PaymentPanel({ billingBatchId }: { billingBatchId: string }) {
+function PaymentPanel({ billingBatchId, onPaid }: { billingBatchId: string; onPaid: () => void }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +116,12 @@ function PaymentPanel({ billingBatchId }: { billingBatchId: string }) {
             </p>
           )}
           <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <StripeCheckoutForm onSuccess={() => setPaid(true)} />
+            <StripeCheckoutForm
+              onSuccess={() => {
+                setPaid(true);
+                onPaid();
+              }}
+            />
           </Elements>
         </>
       )}
@@ -137,9 +142,19 @@ export function BillingPage() {
   const [qboResult, setQboResult] = useState<string | null>(null);
   const [batches, setBatches] = useState<BillingBatch[] | null>(null);
 
+  // Centralized refresh so every action that can change a batch's status
+  // (creating a statement, syncing to QBO, collecting payment) re-pulls the
+  // list from the server instead of leaving stale rows on screen. Previously
+  // only handleCreateBatch refreshed the list, so a sync completed in the
+  // "Collect Payment" panel below never updated the table above it until a
+  // full page reload.
+  function refreshBatches() {
+    api.get<BillingBatch[]>('/billing/batches').then(setBatches).catch(() => {});
+  }
+
   useEffect(() => {
     api.get<SyncFailure[]>('/qbo/sync-failures').then(setFailures).catch(() => {});
-    api.get<BillingBatch[]>('/billing/batches').then(setBatches).catch(() => {});
+    refreshBatches();
     api.get<{ id: string; name: string }[]>('/units/properties').then(setProperties).catch(() => {});
   }, []);
 
@@ -155,7 +170,7 @@ export function BillingPage() {
       );
       setResult(`Created batch ${res.billingBatchId} with ${res.workOrdersBatched} work order(s).`);
       setCreatedBatchId(res.billingBatchId);
-      api.get<BillingBatch[]>('/billing/batches').then(setBatches).catch(() => {});
+      refreshBatches();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create statement');
     }
@@ -165,6 +180,7 @@ export function BillingPage() {
     try {
       await api.post(`/qbo/sync-failures/${failureId}/retry`);
       setFailures((prev) => prev.filter((f) => f.id !== failureId));
+      refreshBatches();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Retry failed');
     }
@@ -176,6 +192,7 @@ export function BillingPage() {
     try {
       const res = await api.post<{ success: boolean; qboInvoiceId: string; alreadySynced?: boolean }>(`/qbo/batches/${batchId}/sync`);
       setQboResult(res.alreadySynced ? `Already synced (Invoice ${res.qboInvoiceId})` : `Synced to QuickBooks (Invoice ${res.qboInvoiceId})`);
+      refreshBatches();
     } catch (err) {
       setQboResult(err instanceof Error ? `QuickBooks sync failed: ${err.message}` : 'QuickBooks sync failed');
     } finally {
@@ -341,7 +358,7 @@ export function BillingPage() {
           <p className="text-xs text-[var(--color-concrete)]">
             Batch {createdBatchId.slice(0, 8)} — corporate AP payment for this statement.
           </p>
-          <PaymentPanel billingBatchId={createdBatchId} />
+          <PaymentPanel billingBatchId={createdBatchId} onPaid={refreshBatches} />
 
           <Button
             variant="ghost"
