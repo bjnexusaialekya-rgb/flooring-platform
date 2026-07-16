@@ -15,6 +15,7 @@ type BillingBatch = {
   billing_period_end: string;
   created_at: string;
   property_name: string;
+  total_amount: number | string;
 };
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -284,6 +285,7 @@ export function BillingPage() {
               <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
                 <th className="pb-2 pl-6 font-medium">Property</th>
                 <th className="pb-2 font-medium">Period</th>
+                <th className="pb-2 font-medium">Amount</th>
                 <th className="pb-2 font-medium">Status</th>
                 <th className="pb-2 pr-6 font-medium"></th>
               </tr>
@@ -292,7 +294,10 @@ export function BillingPage() {
               {batches.map((b) => (
                 <tr key={b.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
                   <td className="py-2.5 pl-6 text-[#0a0a0a] font-semibold">{b.property_name}</td>
-                  <td className="py-2.5 text-xs">{b.billing_period_start} to {b.billing_period_end}</td>
+                  <td className="py-2.5 text-xs text-[var(--color-concrete)]">{b.billing_period_start} to {b.billing_period_end}</td>
+                  <td className="py-2.5 font-mono text-xs font-bold text-[#0a0a0a]">
+                    ${Number(b.total_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
                   <td className="py-2.5">
                     <span
                       className={[

@@ -71,7 +71,13 @@ router.get("/batches", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT bb.id, bb.batch_status, bb.qbo_invoice_id, bb.billing_period_start,
-              bb.billing_period_end, bb.created_at, p.name AS property_name
+              bb.billing_period_end, bb.created_at, p.name AS property_name,
+              COALESCE((
+                SELECT SUM(wli.unit_price_charged * COALESCE(wli.quantity_actual_used, wli.quantity_calculated))
+                FROM work_orders wo
+                JOIN work_order_line_items wli ON wli.work_order_id = wo.id
+                WHERE wo.billing_batch_id = bb.id
+              ), 0) AS total_amount
        FROM billing_batches bb
        JOIN properties p ON p.id = bb.property_id
        ORDER BY bb.created_at DESC`

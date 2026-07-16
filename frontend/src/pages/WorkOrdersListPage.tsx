@@ -521,7 +521,20 @@ export function WorkOrdersListPage() {
                       )}
                     </td>
                     {isStaffOrAdmin && (
-                      <td className="px-5 py-4 text-[#0a0a0a] font-semibold">{wo.installer_name ?? '—'}</td>
+                      <td className="px-5 py-4">
+                        {wo.installer_name ? (
+                          <span className="inline-flex items-center gap-1.5 bg-[var(--color-paper)] rounded-full pl-1 pr-2.5 py-1">
+                            <span className="w-5 h-5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-[10px] font-semibold flex items-center justify-center shrink-0">
+                              {wo.installer_name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
+                            </span>
+                            <span className="text-xs font-medium text-[var(--color-ink)]">{wo.installer_name}</span>
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[var(--color-concrete)] border border-dashed border-[var(--color-concrete-light)] rounded-full px-2.5 py-1">
+                            Unassigned
+                          </span>
+                        )}
+                      </td>
                     )}
                     <td className="px-5 py-4">
                       {wo.target_turn_date && !isNaN(new Date(wo.target_turn_date).getTime()) ? (
