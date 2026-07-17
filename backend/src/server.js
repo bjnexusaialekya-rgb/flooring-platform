@@ -27,6 +27,16 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(helmet());
+
+// In production, CORS_ORIGIN must be set explicitly to the real
+// frontend origin — falling back to localhost would otherwise mean a
+// misconfigured deploy silently accepts requests from nowhere valid
+// (or worse, from whatever the fallback happens to match) instead of
+// failing loudly at boot.
+if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
+  console.error('FATAL: CORS_ORIGIN must be set in production.');
+  process.exit(1);
+}
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',

@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { Home, Globe2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { Button } from '../components/Button';
+import { Select } from '../components/Select';
 
 type ClientOption = { id: string; corporate_name: string };
 type PropertyOption = { id: string; name: string };
@@ -73,9 +74,6 @@ export function AddClientPage() {
 
   const selectedCompany = clients.find((c) => c.id === clientId);
   const selectedProperty = properties.find((p) => p.id === propertyId);
-  // Access preview is shown as soon as a company is picked, before submit —
-  // makes the scope this login is about to receive explicit rather than
-  // something the admin has to infer from two independent dropdowns.
   const showPreview = !!selectedCompany;
 
   return (
@@ -94,37 +92,38 @@ export function AddClientPage() {
         <div>
           <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Display Name</label>
           <input required value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm" />
+            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm
+                       transition-shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]" />
         </div>
         <div>
           <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Email</label>
           <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm" />
+            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm
+                       transition-shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]" />
         </div>
         <div>
           <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Temporary Password</label>
           <input required type="text" value={password} onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm" />
+            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm
+                       transition-shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]" />
         </div>
         <div>
           <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Company</label>
-          <select required value={clientId} onChange={(e) => setClientId(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm">
+          <Select required value={clientId} onChange={(e) => setClientId(e.target.value)}>
             <option value="">Select a company…</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>{c.corporate_name}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
           <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">
             Property <span className="text-[var(--color-concrete)] font-normal">(leave blank for company-wide access)</span>
           </label>
-          <select
+          <Select
             value={propertyId}
             disabled={!clientId || loadingProperties}
             onChange={(e) => setPropertyId(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm disabled:opacity-50"
           >
             <option value="">
               {!clientId ? 'Select a company first…' : loadingProperties ? 'Loading properties…' : 'All properties (company-wide)'}
@@ -132,7 +131,7 @@ export function AddClientPage() {
             {properties.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
-          </select>
+          </Select>
         </div>
 
         {showPreview && (

@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { api } from '../lib/api';
 import { Building2, MapPin, Check, ImagePlus } from 'lucide-react';
 import { Button } from '../components/Button';
+import { Select } from '../components/Select';
 
 type ClientOption = { id: string; corporate_name: string };
 
@@ -124,10 +125,6 @@ export function AddCompanyPage() {
 
   return (
     <div className="max-w-lg">
-      {/* Wizard progress: a connecting line between the two step circles,
-          filling in green once step 1 completes, plus a checkmark
-          replacing the "1" glyph — makes this read as a real multi-step
-          flow instead of two independently-numbered section headers. */}
       <div className="relative mb-8">
         <div className="flex items-center">
           <span
@@ -206,27 +203,19 @@ export function AddCompanyPage() {
 
           <div>
             <label className={labelClass}>Payment Terms</label>
-            <select
-              value={paymentTerms}
-              onChange={(e) => setPaymentTerms(e.target.value as 'full_only' | 'deposit_required')}
-              className={inputClass}
-            >
+            <Select value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value as 'full_only' | 'deposit_required')}>
               <option value="full_only">Full payment only</option>
               <option value="deposit_required">Deposit required</option>
-            </select>
+            </Select>
           </div>
           {paymentTerms === 'deposit_required' && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Deposit Type</label>
-                <select
-                  value={depositType}
-                  onChange={(e) => setDepositType(e.target.value as 'percent' | 'fixed')}
-                  className={inputClass}
-                >
+                <Select value={depositType} onChange={(e) => setDepositType(e.target.value as 'percent' | 'fixed')}>
                   <option value="percent">% of total</option>
                   <option value="fixed">Fixed amount</option>
-                </select>
+                </Select>
               </div>
               <div>
                 <label className={labelClass}>{depositType === 'percent' ? 'Percent' : 'Amount ($)'}</label>
@@ -243,14 +232,10 @@ export function AddCompanyPage() {
 
           <div>
             <label className={labelClass}>Agreement Signed?</label>
-            <select
-              value={agreementSigned}
-              onChange={(e) => setAgreementSigned(e.target.value as 'yes' | 'no')}
-              className={inputClass}
-            >
+            <Select value={agreementSigned} onChange={(e) => setAgreementSigned(e.target.value as 'yes' | 'no')}>
               <option value="no">No</option>
               <option value="yes">Yes</option>
-            </select>
+            </Select>
           </div>
           {agreementSigned === 'yes' && (
             <div>
@@ -270,14 +255,10 @@ export function AddCompanyPage() {
 
           <div>
             <label className={labelClass}>Advance Amount Agreed?</label>
-            <select
-              value={advanceAgreed}
-              onChange={(e) => setAdvanceAgreed(e.target.value as 'yes' | 'no')}
-              className={inputClass}
-            >
+            <Select value={advanceAgreed} onChange={(e) => setAdvanceAgreed(e.target.value as 'yes' | 'no')}>
               <option value="no">No</option>
               <option value="yes">Yes</option>
-            </select>
+            </Select>
           </div>
           {advanceAgreed === 'yes' && (
             <div>
@@ -329,19 +310,14 @@ export function AddCompanyPage() {
 
           <div>
             <label className={labelClass}>Company</label>
-            <select
-              required
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-              className={inputClass}
-            >
+            <Select required value={clientId} onChange={(e) => setClientId(e.target.value)}>
               <option value="">Select a company…</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.corporate_name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <label className={labelClass}>Property Name</label>

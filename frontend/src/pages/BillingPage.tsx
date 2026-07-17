@@ -5,6 +5,7 @@ import { FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { api, downloadFile } from '../lib/api';
 import { EmptyState, TableSkeleton, MetricCard } from '../components/UIState';
 import { Button } from '../components/Button';
+import { Select } from '../components/Select';
 
 type SyncFailure = { id: string; billing_batch_id: string; error_message: string; failed_at: string };
 type BillingBatch = {
@@ -142,12 +143,6 @@ export function BillingPage() {
   const [qboResult, setQboResult] = useState<string | null>(null);
   const [batches, setBatches] = useState<BillingBatch[] | null>(null);
 
-  // Centralized refresh so every action that can change a batch's status
-  // (creating a statement, syncing to QBO, collecting payment) re-pulls the
-  // list from the server instead of leaving stale rows on screen. Previously
-  // only handleCreateBatch refreshed the list, so a sync completed in the
-  // "Collect Payment" panel below never updated the table above it until a
-  // full page reload.
   function refreshBatches() {
     api.get<BillingBatch[]>('/billing/batches').then(setBatches).catch(() => {});
   }
@@ -230,17 +225,12 @@ export function BillingPage() {
       >
         <div>
           <label className="block text-xs font-medium text-[var(--color-ink-soft)] mb-1.5">Property</label>
-          <select
-            required
-            value={propertyId}
-            onChange={(e) => setPropertyId(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm"
-          >
+          <Select required value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
             <option value="">Select a property…</option>
             {properties.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -250,7 +240,8 @@ export function BillingPage() {
               required
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm"
+              className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm
+                         transition-shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]"
             />
           </div>
           <div>
@@ -260,7 +251,8 @@ export function BillingPage() {
               required
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm"
+              className="w-full px-3 py-2 rounded-md border border-[var(--color-concrete-light)] text-sm
+                         transition-shadow focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]"
             />
           </div>
         </div>
