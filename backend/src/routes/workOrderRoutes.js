@@ -212,9 +212,14 @@ router.get('/:id/portal-view', async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to view this work order' });
     }
 
+    // scheduled_date added for the client-facing "estimated completion"
+    // display — this is a scheduling column, not a price column, so it
+    // doesn't touch the pricing-blind boundary the rest of this SELECT
+    // deliberately maintains (see the route's docstring above).
     const result = await pool.query(
       `SELECT
           wo.id, wo.status, wo.po_number, wo.target_turn_date, wo.created_at,
+          wo.scheduled_date,
           COALESCE(
             json_agg(
               json_build_object(
