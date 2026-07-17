@@ -93,4 +93,58 @@ router.get('/summary', async (req, res) => {
   }
 });
 
+/**
+ * GET /reports/ar-aging
+ * Buckets outstanding (unpaid) billing batches by age since their
+ * billing_period_end, into 0-30 / 31-60 / 60+ day buckets. "Outstanding"
+ * mirrors stripeWebhook.js's success path exactly: batch_status only
+ * flips to 'closed' once a payment_intent.succeeded event has processed
+ * for that batch (see stripeWebhookRoutes.js), so any batch not in
+ * 'closed' status is still owed. Reuses the same SUM(unit_price_charged *
+ * quantity) amount calculation as GET /billing/batches so a batch's
+ * amount here always matches what the Billing page shows for it.
+ */
+router.get('/ar-aging', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+          bb.id,
+          bb.billing_period_end,
+          p.name AS property_name,
+          COALESCE((
+            SELECT SUM(wli.unit_price_charged * COALESCE(wli.quantity_actual_used, wli.quantity_calculated))
+            FROM work_orders wo
+            JOIN work_order_line_items wli ON wli.work_order_id = wo.id
+            WHERE wo.billing_batch_id = bb.id
+          ), 0) AS amount,
+          GREATEST(0, (CURRENT_DATE - bb.billing_period_end::date))::int AS days_outstanding
+       FROM billing_batches bb
+       JOIN properties p ON p.id = bb.property_id
+       WHERE bb.batch_status != 'closed'`
+    );
+
+    const buckets = { bucket_0_30: 0, bucket_31_60: 0, bucket_60_plus: 0 };
+    for (const row of result.rows) {
+      const amt = Number(row.amount);
+      if (row.days_outstanding <= 30) buckets.bucket_0_30 += amt;
+      else if (row.days_outstanding <= 60) buckets.bucket_31_60 += amt;
+      else buckets.bucket_60_plus += amt;
+    }
+
+    return res.status(200).json({
+      buckets,
+      totalOutstanding: buckets.bucket_0_30 + buckets.bucket_31_60 + buckets.bucket_60_plus,
+      batches: result.rows.map((r) => ({
+        id: r.id,
+        propertyName: r.property_name,
+        amount: Number(r.amount),
+        daysOutstanding: r.days_outstanding,
+      })),
+    });
+  } catch (err) {
+    console.error('AR aging report error:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
