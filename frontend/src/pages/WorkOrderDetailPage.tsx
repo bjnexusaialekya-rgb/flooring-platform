@@ -264,6 +264,20 @@ export function WorkOrderDetailPage() {
         )}
       </div>
 
+      {/* Estimated completion — client-visible, scheduling data only (not
+          price), sourced from the same scheduled_date staff set in the
+          "Install date" field above. Calmly states "not yet scheduled"
+          rather than hiding the row entirely when unset, so a client
+          checking in early gets an honest status instead of nothing. */}
+      <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] px-6 py-4 mb-4 flex items-center justify-between">
+        <span className="text-sm text-[var(--color-concrete)]">Estimated completion</span>
+        <span className="text-sm font-semibold text-[var(--color-ink)]">
+          {order.scheduled_date
+            ? new Date(order.scheduled_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+            : 'Not yet scheduled'}
+        </span>
+      </div>
+
       {/* ---- Client-visible section: quantities only, no price ---- */}
       <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] overflow-hidden">
         <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] px-6 pt-6 mb-4">

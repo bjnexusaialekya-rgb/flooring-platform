@@ -74,6 +74,7 @@ export type WorkOrderPortalView = {
   po_number: string | null;
   target_turn_date: string | null;
   created_at: string;
+  scheduled_date: string | null;
   line_items: { roomName: string; quantityCalculated: number; quantityActualUsed: number | null }[];
 };
 
