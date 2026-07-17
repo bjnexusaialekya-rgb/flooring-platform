@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, Building2, DollarSign, AlertOctagon, RefreshCw } from 'lucide-react';
+import { TrendingUp, Building2, DollarSign, AlertOctagon, RefreshCw, Landmark } from 'lucide-react';
 import { api } from '../lib/api';
 import { EmptyState, MetricCard } from '../components/UIState';
 import {
@@ -16,6 +16,12 @@ type ReportSummary = {
   revenueTrend: { day: string; total: number }[];
   topProperties: { name: string; work_order_count: number }[];
   pendingSyncFailures: number;
+};
+
+type ArAging = {
+  buckets: { bucket_0_30: number; bucket_31_60: number; bucket_60_plus: number };
+  totalOutstanding: number;
+  batches: { id: string; propertyName: string; amount: number; daysOutstanding: number }[];
 };
 
 function DashboardSkeleton() {
@@ -61,16 +67,11 @@ function ChartTooltip({ active, payload }: any) {
   );
 }
 
-// Rotating gradient palette for the "Top Properties" bars — one distinct
-// hue per bar, each rendered as a light-to-bright horizontal gradient.
-//
-// Previously this used 5 arbitrary hues (blue/pink/green/purple/orange)
-// pulled from nowhere in particular — a generic chart-library rainbow that
-// visually clashed with the rest of the app's cream/lime/green palette.
-// Replaced with a single-family gradient set (lime -> forest green,
-// varying lightness/saturation) so the busiest chart on the dashboard
-// reads as part of the same product instead of a bolted-on chart widget.
-// A 6th+ property wraps back to the first gradient.
+// Rotating gradient palette for the "Top Properties" bars — single-family
+// lime/green gradient set matching the app's cream/lime/green theme,
+// replacing the previous arbitrary 5-hue rainbow (blue/pink/purple/orange)
+// that clashed with the rest of the product. A 6th+ property wraps back
+// to the first gradient.
 const PROPERTY_BAR_GRADIENTS = [
   { id: 'propBarLime', from: '#d4e896', to: '#8fae2e' },
   { id: 'propBarForest', from: '#9fc98a', to: '#3a7d3e' },
@@ -88,12 +89,39 @@ function pctDelta(current: number, previous: number): { direction: 'up' | 'down'
   };
 }
 
+// AR aging bucket bar — a single horizontal segment sized by proportion of
+// total outstanding, colored by risk (green = current, amber = 31-60,
+// red = 60+). Kept as a plain div, not a chart-library component, since
+// it's one simple proportional bar rather than anything needing axes.
+function AgingBar({ label, amount, total, tone }: { label: string; amount: number; total: number; tone: 'good' | 'warn' | 'bad' }) {
+  const pct = total > 0 ? Math.max((amount / total) * 100, amount > 0 ? 3 : 0) : 0;
+  const barColor =
+    tone === 'good' ? 'bg-[var(--color-success)]' : tone === 'warn' ? 'bg-[var(--color-amber)]' : 'bg-[var(--color-danger)]';
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs mb-1">
+        <span className="text-[var(--color-ink-soft)]">{label}</span>
+        <span className="font-mono font-semibold text-[var(--color-ink)]">
+          ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full bg-[var(--color-concrete-light)] overflow-hidden">
+        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
 export function ReportsPage() {
   const [data, setData] = useState<ReportSummary | null>(null);
+  const [arAging, setArAging] = useState<ArAging | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<ReportSummary>('/reports/summary').then(setData).catch((err) => setError(err.message));
+    api.get<ArAging>('/reports/ar-aging').then(setArAging).catch(() => {
+      /* non-fatal: dashboard still renders without the aging widget */
+    });
   }, []);
 
   if (error) {
@@ -229,51 +257,89 @@ export function ReportsPage() {
             </div>
           </div>
 
-          <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
-            <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
-              Top Properties by Volume
-            </h2>
-            {data.topProperties.length === 0 ? (
-              <EmptyState
-                icon={<Building2 size={22} />}
-                title="No properties yet"
-                description="Property volume rankings will show up here once work orders come in."
-              />
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart
-                  data={data.topProperties.map((p) => ({ name: p.name, count: p.work_order_count }))}
-                  layout="vertical"
-                  margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
-                >
-                  <defs>
-                    {PROPERTY_BAR_GRADIENTS.map((g) => (
-                      <linearGradient key={g.id} id={g.id} x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor={g.from} />
-                        <stop offset="100%" stopColor={g.to} />
-                      </linearGradient>
-                    ))}
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
-                  <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    tick={{ fontSize: 12, fontWeight: 600, fill: 'var(--color-ink)' }}
-                    width={110}
-                  />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper)' }} />
-                  <Bar dataKey="count" radius={[0, 8, 8, 0]}>
-                    {data.topProperties.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={`url(#${PROPERTY_BAR_GRADIENTS[i % PROPERTY_BAR_GRADIENTS.length].id})`}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
+              <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] mb-4">
+                Top Properties by Volume
+              </h2>
+              {data.topProperties.length === 0 ? (
+                <EmptyState
+                  icon={<Building2 size={22} />}
+                  title="No properties yet"
+                  description="Property volume rankings will show up here once work orders come in."
+                />
+              ) : (
+                <ResponsiveContainer width="100%" height={220} minHeight={220}>
+                  <BarChart
+                    data={data.topProperties.map((p) => ({ name: p.name, count: p.work_order_count }))}
+                    layout="vertical"
+                    margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
+                  >
+                    <defs>
+                      {PROPERTY_BAR_GRADIENTS.map((g) => (
+                        <linearGradient key={g.id} id={g.id} x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor={g.from} />
+                          <stop offset="100%" stopColor={g.to} />
+                        </linearGradient>
+                      ))}
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-concrete-light)" />
+                    <XAxis type="number" tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={{ fontSize: 12, fontWeight: 600, fill: 'var(--color-ink)' }}
+                      width={110}
+                    />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-paper)' }} />
+                    <Bar dataKey="count" radius={[0, 8, 8, 0]}>
+                      {data.topProperties.map((_, i) => (
+                        <Cell
+                          key={i}
+                          fill={`url(#${PROPERTY_BAR_GRADIENTS[i % PROPERTY_BAR_GRADIENTS.length].id})`}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            {/* AR aging — outstanding billing batches bucketed by days since
+                billing_period_end. Shows even at zero (all-current is good
+                news worth confirming, not just hiding the widget). */}
+            <div className="bg-[var(--color-panel)] rounded-xl border surface-card border-[var(--color-concrete-light)] p-6">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="font-[var(--font-display)] font-semibold text-[var(--color-ink)] flex items-center gap-2">
+                  <Landmark size={16} className="text-[var(--color-concrete)]" />
+                  AR Aging
+                </h2>
+              </div>
+              {arAging === null ? (
+                <div className="animate-pulse space-y-3 mt-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-1.5 bg-[var(--color-concrete-light)] rounded-full" />
+                  ))}
+                </div>
+              ) : arAging.totalOutstanding === 0 ? (
+                <EmptyState
+                  icon={<Landmark size={22} />}
+                  title="Nothing outstanding"
+                  description="Every billing batch is current — no unpaid balances."
+                />
+              ) : (
+                <>
+                  <p className="font-[var(--font-mono)] text-2xl font-bold text-[var(--color-ink)] mb-4">
+                    ${arAging.totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <div className="space-y-3">
+                    <AgingBar label="0–30 days" amount={arAging.buckets.bucket_0_30} total={arAging.totalOutstanding} tone="good" />
+                    <AgingBar label="31–60 days" amount={arAging.buckets.bucket_31_60} total={arAging.totalOutstanding} tone="warn" />
+                    <AgingBar label="60+ days" amount={arAging.buckets.bucket_60_plus} total={arAging.totalOutstanding} tone="bad" />
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </>
       )}
