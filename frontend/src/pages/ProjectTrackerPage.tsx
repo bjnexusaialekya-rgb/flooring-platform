@@ -157,7 +157,7 @@ export function ProjectTrackerPage() {
 
       {trackers !== null && trackers.length > 0 && (
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <MetricCard label="Active projects" value={String(activeCount)} tone="success" icon={<FolderKanban size={18} />} />
+          <MetricCard label="Active projects" value={String(activeCount)} tone="brass" icon={<FolderKanban size={18} />} />
           <MetricCard label="Total labor" value={`$${totalLabor.toFixed(2)}`} tone="total" icon={<Users size={18} />} />
           <MetricCard label="Total material" value={`$${totalMaterial.toFixed(2)}`} tone="revenue" icon={<Package size={18} />} />
         </div>
