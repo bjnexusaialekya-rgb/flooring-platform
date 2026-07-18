@@ -18,6 +18,23 @@ type BillingBatch = {
   property_name: string;
   total_amount: number | string;
 };
+// Formats an ISO period start/end into a human-readable range, e.g.
+// "Jul 14, 2026" for a same-day batch or "Jul 14 - Jul 20, 2026" for a
+// real range. Replaces the raw ISO timestamp strings (with a literal
+// "T00:00:00.000Z") that were rendering directly in the statements table.
+function formatPeriod(start: string, end: string): string {
+  const s = new Date(start);
+  const e = new Date(end);
+  const sameDay = s.toDateString() === e.toDateString();
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' };
+  if (sameDay) return s.toLocaleDateString('en-US', opts);
+  const sameYear = s.getUTCFullYear() === e.getUTCFullYear();
+  const startStr = s.toLocaleDateString('en-US', sameYear ? { month: 'short', day: 'numeric', timeZone: 'UTC' } : opts);
+  const endStr = e.toLocaleDateString('en-US', opts);
+  return `${startStr} - ${endStr}`;
+}
+
+
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
@@ -301,10 +318,17 @@ export function BillingPage() {
               </tr>
             </thead>
             <tbody>
-              {batches.map((b) => (
-                <tr key={b.id} className="border-b last:border-0 border-[var(--color-concrete-light)]">
+              {batches.map((b, i) => (
+                <tr
+                  key={b.id}
+                  className={[
+                    'border-b last:border-0 border-[var(--color-concrete-light)] transition-colors',
+                    i % 2 === 1 ? 'bg-[var(--color-paper)]/40' : '',
+                    'hover:bg-[var(--color-primary-soft)]/40',
+                  ].join(' ')}
+                >
                   <td className="py-2.5 pl-6 text-[#0a0a0a] font-semibold">{b.property_name}</td>
-                  <td className="py-2.5 text-xs text-[var(--color-concrete)]">{b.billing_period_start} to {b.billing_period_end}</td>
+                  <td className="py-2.5 text-xs text-[var(--color-concrete)]">{formatPeriod(b.billing_period_start, b.billing_period_end)}</td>
                   <td className="py-2.5 font-mono text-xs font-bold text-[#0a0a0a]">
                     ${Number(b.total_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
@@ -321,18 +345,22 @@ export function BillingPage() {
                     </span>
                   </td>
                   <td className="py-2.5 pr-6">
-                    <div className="flex items-center gap-3">
-                      <Button variant="ghost" onClick={() => setCreatedBatchId(b.id)} className="!px-0 !py-0 !bg-transparent text-[var(--color-link)] hover:underline">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCreatedBatchId(b.id)}
+                        className="text-xs font-medium px-2.5 py-1 rounded-md border border-[var(--color-concrete-light)] text-[var(--color-ink)] hover:bg-[var(--color-paper)] transition-colors"
+                      >
                         Open
-                      </Button>
+                      </button>
                       {b.qbo_invoice_id && (
-                        <Button
-                          variant="ghost"
+                        <button
+                          type="button"
                           onClick={() => downloadFile(`/qbo/batches/${b.id}/pdf`, `Invoice-${b.qbo_invoice_id}.pdf`)}
-                          className="!px-0 !py-0 !bg-transparent text-[var(--color-link)] hover:underline"
+                          className="text-xs font-medium px-2.5 py-1 rounded-md border border-[var(--color-concrete-light)] text-[var(--color-ink)] hover:bg-[var(--color-paper)] transition-colors"
                         >
                           Download PDF
-                        </Button>
+                        </button>
                       )}
                     </div>
                   </td>
