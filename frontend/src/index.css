@@ -117,7 +117,7 @@
   /* Dashboard metric-card icon chips / donut segments — distinct from
      the work-order status tokens above (a "Total"/"Revenue" metric
      card isn't a work-order status). */
-  --color-chip-total: #1e5c4d;
+  --color-chip-total: #B47B2B;
   --color-chip-progress: #8a7714;
   --color-chip-completed: #1a8a6e;
   --color-chip-overdue: #7a6b3f;
