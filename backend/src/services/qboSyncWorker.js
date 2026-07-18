@@ -215,12 +215,29 @@ async function syncBatchToQuickBooks(batchId) {
 async function markQboInvoicePaid(qboInvoiceId, amountPaid) {
   const realmId = await getActiveRealmId();
   const accessToken = await getValidAccessToken(realmId);
+
+  // QBO's Payment endpoint requires a CustomerRef on every payment --
+  // fetch the invoice first so we use the exact customer QBO already
+  // has on file for it, rather than re-deriving via findOrCreateCustomer
+  // (which risks creating/matching a different customer record).
+  const invoiceRes = await axios.get(
+    `${process.env.QBO_BASE_URL}/v3/company/${realmId}/invoice/${qboInvoiceId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+      },
+    }
+  );
+  const customerId = invoiceRes.data.Invoice.CustomerRef.value;
+
   const endpoint = `${process.env.QBO_BASE_URL}/v3/company/${realmId}/payment`;
 
   await axios.post(
     endpoint,
     {
       TotalAmt: amountPaid,
+      CustomerRef: { value: customerId },
       Line: [
         {
           Amount: amountPaid,
