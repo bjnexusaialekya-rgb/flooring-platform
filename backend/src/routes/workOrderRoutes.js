@@ -417,9 +417,9 @@ router.patch('/:id/status', requireRole('staff', 'admin'), async (req, res) => {
         const required = Number(row.required_qty);
         await client.query(
           `INSERT INTO inventory_stock (material_id, quantity_on_hand)
-           VALUES ($1, $2 * -1)
+           VALUES ($1, $2::numeric * -1)
            ON CONFLICT (material_id)
-           DO UPDATE SET quantity_on_hand = inventory_stock.quantity_on_hand - $2`,
+           DO UPDATE SET quantity_on_hand = inventory_stock.quantity_on_hand - $2::numeric`,
           [row.material_id, required]
         );
         await client.query(
