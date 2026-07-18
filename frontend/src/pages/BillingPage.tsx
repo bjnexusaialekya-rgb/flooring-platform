@@ -17,6 +17,7 @@ type BillingBatch = {
   created_at: string;
   property_name: string;
   total_amount: number | string;
+  unit_numbers: string | null;
 };
 // Formats an ISO period start/end into a human-readable range, e.g.
 // "Jul 14, 2026" for a same-day batch or "Jul 14 - Jul 20, 2026" for a
@@ -296,7 +297,7 @@ export function BillingPage() {
           Existing Statements
         </h2>
 
-        {batches === null && <TableSkeleton columns={4} rows={3} />}
+        {batches === null && <TableSkeleton columns={5} rows={3} />}
 
         {batches !== null && batches.length === 0 && (
           <EmptyState
@@ -311,6 +312,7 @@ export function BillingPage() {
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-[var(--color-concrete)] border-b border-[var(--color-concrete-light)]">
                 <th className="pb-2 pl-6 font-medium">Property</th>
+                <th className="pb-2 font-medium">Unit</th>
                 <th className="pb-2 font-medium">Period</th>
                 <th className="pb-2 font-medium">Amount</th>
                 <th className="pb-2 font-medium">Status</th>
@@ -328,6 +330,7 @@ export function BillingPage() {
                   ].join(' ')}
                 >
                   <td className="py-2.5 pl-6 text-[#0a0a0a] font-semibold">{b.property_name}</td>
+                  <td className="py-2.5 text-xs text-[var(--color-concrete)]">{b.unit_numbers || "—"}</td>
                   <td className="py-2.5 text-xs text-[var(--color-concrete)]">{formatPeriod(b.billing_period_start, b.billing_period_end)}</td>
                   <td className="py-2.5 font-mono text-xs font-bold text-[#0a0a0a]">
                     ${Number(b.total_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

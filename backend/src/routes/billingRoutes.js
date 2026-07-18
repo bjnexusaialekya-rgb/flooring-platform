@@ -77,7 +77,13 @@ router.get("/batches", async (req, res) => {
                 FROM work_orders wo
                 JOIN work_order_line_items wli ON wli.work_order_id = wo.id
                 WHERE wo.billing_batch_id = bb.id
-              ), 0) AS total_amount
+              ), 0) AS total_amount,
+              (
+                SELECT STRING_AGG(u.unit_number, ', ' ORDER BY u.unit_number)
+                FROM work_orders wo
+                JOIN units u ON u.id = wo.unit_id
+                WHERE wo.billing_batch_id = bb.id
+              ) AS unit_numbers
        FROM billing_batches bb
        JOIN properties p ON p.id = bb.property_id
        ORDER BY bb.created_at DESC`
