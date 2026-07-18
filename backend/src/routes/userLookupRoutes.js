@@ -16,8 +16,8 @@ router.get('/', async (req, res) => {
     const roleFilter = req.query.role;
     const result = await pool.query(
       roleFilter
-        ? `SELECT id, display_name, email, role FROM users WHERE role = $1 AND is_active = true ORDER BY display_name`
-        : `SELECT id, display_name, email, role FROM users WHERE is_active = true ORDER BY display_name`,
+        ? `SELECT id, display_name, email, role FROM users WHERE role = $1 AND is_active = true ORDER BY display_name LIMIT 1000`
+        : `SELECT id, display_name, email, role FROM users WHERE is_active = true ORDER BY display_name LIMIT 1000`,
       roleFilter ? [roleFilter] : []
     );
     return res.status(200).json(result.rows);

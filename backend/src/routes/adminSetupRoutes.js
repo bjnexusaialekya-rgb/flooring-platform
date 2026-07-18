@@ -8,7 +8,7 @@ router.use(requireAuth, requireRole('admin'));
 
 router.get('/clients', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, corporate_name FROM clients ORDER BY corporate_name');
+    const result = await pool.query('SELECT id, corporate_name FROM clients ORDER BY corporate_name LIMIT 1000');
     return res.status(200).json(result.rows);
   } catch (err) {
     console.error('List clients error:', err.message);

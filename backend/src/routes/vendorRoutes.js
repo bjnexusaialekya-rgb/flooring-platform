@@ -19,7 +19,8 @@ router.get('/', async (req, res) => {
        LEFT JOIN purchase_orders po ON po.vendor_id = v.id
        LEFT JOIN purchase_order_line_items poli ON poli.purchase_order_id = po.id
        GROUP BY v.id
-       ORDER BY v.is_active DESC, v.name`
+       ORDER BY v.is_active DESC, v.name
+       LIMIT 1000`
     );
     return res.status(200).json(result.rows);
   } catch (err) {

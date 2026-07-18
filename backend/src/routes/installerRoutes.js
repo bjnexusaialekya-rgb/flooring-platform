@@ -26,7 +26,8 @@ router.get('/', async (req, res) => {
        FROM installers i
        LEFT JOIN work_orders wo ON wo.installer_id = i.id
        GROUP BY i.id
-       ORDER BY i.is_active DESC, i.name`
+       ORDER BY i.is_active DESC, i.name
+       LIMIT 1000`
     );
     return res.status(200).json(result.rows);
   } catch (err) {
