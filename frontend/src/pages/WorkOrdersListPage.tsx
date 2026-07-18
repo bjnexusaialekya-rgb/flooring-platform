@@ -300,9 +300,9 @@ export function WorkOrdersListPage() {
         // revenueThisMonth), and this page has no other unique revenue
         // scope to show that wouldn't just be the same figure restated.
         <div className="grid grid-cols-4 gap-4 mb-6">
-          <MetricCard label="Total work orders" value={String(totalCount)} tone="total" icon={<ClipboardList size={18} />} />
-          <MetricCard label="In progress" value={String(openCount)} tone="progress" icon={<Clock size={18} />} />
-          <MetricCard label="Completed" value={String(completedCount)} tone="completed" icon={<CheckCircle2 size={18} />} />
+          <MetricCard label="Total work orders" value={String(totalCount)} tone="total" gradient="linear-gradient(135deg, #c2a83e, #935a2e)" icon={<ClipboardList size={18} />} />
+          <MetricCard label="In progress" value={String(openCount)} tone="progress" gradient="linear-gradient(135deg, #2ecc8f, #145c4d)" icon={<Clock size={18} />} />
+          <MetricCard label="Completed" value={String(completedCount)} tone="completed" gradient="linear-gradient(135deg, #5CB82E, #2E7D1F)" icon={<CheckCircle2 size={18} />} />
           {/* Always tone="overdue" — even at zero. This card must never
               borrow the Completed card's green, since sharing that tone
               made the two cards visually indistinguishable at a glance.
@@ -311,6 +311,7 @@ export function WorkOrdersListPage() {
             label="Overdue"
             value={String(overdueCount)}
             tone="overdue"
+            gradient="linear-gradient(135deg, #D97757, #A34F37)"
             icon={overdueCount > 0 ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
           />
         </div>

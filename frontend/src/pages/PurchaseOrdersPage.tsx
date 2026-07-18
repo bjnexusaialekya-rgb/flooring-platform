@@ -118,9 +118,9 @@ export function PurchaseOrdersPage() {
 
       {orders !== null && orders.length > 0 && (
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <MetricCard label="Total Purchase Orders" value={String(orders.length)} tone="total" icon={<Package size={18} />} />
-          <MetricCard label="Open Orders" value={String(openOrders.length)} tone="progress" icon={<Clock size={18} />} />
-          <MetricCard label="Open Order Value" value={`$${openValue.toFixed(2)}`} tone="revenue" icon={<DollarSign size={18} />} />
+          <MetricCard label="Total Purchase Orders" value={String(orders.length)} tone="total" gradient="linear-gradient(135deg, #c2a83e, #935a2e)" icon={<Package size={18} />} />
+          <MetricCard label="Open Orders" value={String(openOrders.length)} tone="progress" gradient="linear-gradient(135deg, #2ecc8f, #145c4d)" icon={<Clock size={18} />} />
+          <MetricCard label="Open Order Value" value={`$${openValue.toFixed(2)}`} tone="revenue" gradient="linear-gradient(135deg, #5CB82E, #2E7D1F)" icon={<DollarSign size={18} />} />
         </div>
       )}
 

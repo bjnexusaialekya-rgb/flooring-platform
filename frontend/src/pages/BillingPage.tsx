@@ -208,12 +208,13 @@ export function BillingPage() {
 
       {batches !== null && batches.length > 0 && (
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <MetricCard label="Statements" value={String(batches.length)} tone="total" icon={<FileText size={18} />} />
-          <MetricCard label="Synced to QBO" value={String(syncedCount)} tone="success" icon={<CheckCircle2 size={18} />} />
+          <MetricCard label="Statements" value={String(batches.length)} tone="total" gradient="linear-gradient(135deg, #c2a83e, #935a2e)" icon={<FileText size={18} />} />
+          <MetricCard label="Synced to QBO" value={String(syncedCount)} tone="success" gradient="linear-gradient(135deg, #2ecc8f, #145c4d)" icon={<CheckCircle2 size={18} />} />
           <MetricCard
             label="Sync Failures"
             value={String(failures.length)}
             tone={failures.length > 0 ? 'danger' : 'default'}
+            gradient="linear-gradient(135deg, #5CB82E, #2E7D1F)"
             icon={failures.length > 0 ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}
           />
         </div>

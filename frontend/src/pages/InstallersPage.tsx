@@ -69,7 +69,7 @@ export function InstallersPage() {
         <h1 className="font-[var(--font-display)] text-2xl font-semibold text-[var(--color-ink)]">
           Installers
         </h1>
-        <Button onClick={() => setFormOpen((v) => !v)}>
+        <Button variant="ghost" className="btn-cta-gradient" style={{ background: "linear-gradient(135deg, var(--color-cta-start), var(--color-cta-end))" }} onClick={() => setFormOpen((v) => !v)}>
           <Plus size={15} />
           {formOpen ? 'Cancel' : 'Add Installer'}
         </Button>

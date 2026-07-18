@@ -40,7 +40,7 @@ export const STATUS_HEX: Record<string, string> = {
   priced: '#706010',           // --color-status-priced
   approved: '#532aae',         // --color-status-approved
   scheduled: '#115256',        // --color-status-scheduled
-  completed: '#1e5c4d',        // --color-status-completed
+  completed: '#15803D',        // --color-status-completed
   billing_approved: '#544699', // --color-status-billing
   invoiced: '#1e5c4d',         // --color-status-invoiced
 };

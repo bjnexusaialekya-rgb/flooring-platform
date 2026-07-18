@@ -91,7 +91,7 @@ export function ProjectTrackerPage() {
             consolidated billing, not a separate invoice type.
           </p>
         </div>
-        <Button onClick={() => setShowForm((s) => !s)}>+ New Project</Button>
+        <Button variant="ghost" className="btn-cta-gradient" style={{ background: "linear-gradient(135deg, var(--color-cta-start), var(--color-cta-end))" }} onClick={() => setShowForm((s) => !s)}>+ New Project</Button>
       </div>
 
       {error && (
@@ -157,9 +157,9 @@ export function ProjectTrackerPage() {
 
       {trackers !== null && trackers.length > 0 && (
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <MetricCard label="Active projects" value={String(activeCount)} tone="brass" icon={<FolderKanban size={18} />} />
-          <MetricCard label="Total labor" value={`$${totalLabor.toFixed(2)}`} tone="total" icon={<Users size={18} />} />
-          <MetricCard label="Total material" value={`$${totalMaterial.toFixed(2)}`} tone="revenue" icon={<Package size={18} />} />
+          <MetricCard label="Active projects" value={String(activeCount)} tone="brass" gradient="linear-gradient(135deg, #c2a83e, #935a2e)" icon={<FolderKanban size={18} />} />
+          <MetricCard label="Total labor" value={`$${totalLabor.toFixed(2)}`} tone="total" gradient="linear-gradient(135deg, #2ecc8f, #145c4d)" icon={<Users size={18} />} />
+          <MetricCard label="Total material" value={`$${totalMaterial.toFixed(2)}`} tone="revenue" gradient="linear-gradient(135deg, #5CB82E, #2E7D1F)" icon={<Package size={18} />} />
         </div>
       )}
 

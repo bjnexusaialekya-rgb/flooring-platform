@@ -150,6 +150,7 @@ export function ReportsPage() {
               label="Revenue this month"
               value={`$${data.revenueThisMonth.toFixed(2)}`}
               tone="revenue"
+              gradient="linear-gradient(135deg, #c2a83e, #935a2e)"
               icon={<DollarSign size={18} />}
               trend={pctDelta(data.revenueThisMonth, data.revenueLastMonth)}
             />
@@ -157,18 +158,21 @@ export function ReportsPage() {
               label="Overdue work orders"
               value={String(data.overdueCount)}
               tone={data.overdueCount > 0 ? 'overdue' : 'completed'}
+              gradient="linear-gradient(135deg, #D97757, #A34F37)"
               icon={<AlertOctagon size={18} />}
             />
             <MetricCard
               label="QBO sync failures"
               value={String(data.pendingSyncFailures)}
               tone={data.pendingSyncFailures > 0 ? 'danger' : 'success'}
+              gradient="linear-gradient(135deg, #F0932B, #B85C1F)"
               icon={<RefreshCw size={18} />}
             />
             <MetricCard
               label="Active properties"
               value={String(data.topProperties.length)}
               tone="total"
+              gradient="linear-gradient(135deg, #5CB82E, #2E7D1F)"
               icon={<Building2 size={18} />}
             />
           </div>

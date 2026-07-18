@@ -84,12 +84,14 @@ export function MetricCard({
   tone = 'default',
   icon,
   trend,
+  gradient,
 }: {
   label: string;
   value: string;
   tone?: MetricTone;
   icon?: ReactNode;
   trend?: { direction: 'up' | 'down'; label: string };
+  gradient?: string;
 }) {
   const chipVar = TONE_CHIP_VAR[tone];
   const valueClass = TONE_VALUE_CLASS[tone];
@@ -99,10 +101,14 @@ export function MetricCard({
       <div className="flex items-center gap-3.5">
         {icon && (
           <span
-            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: chipVar, color: '#ffffff' }}
+            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 relative overflow-hidden"
+            style={{ background: gradient || chipVar, color: '#ffffff' }}
           >
-            {icon}
+            <span
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 35%, rgba(255,255,255,0) 60%)' }}
+            />
+            <span className="relative">{icon}</span>
           </span>
         )}
         <div className="min-w-0">
