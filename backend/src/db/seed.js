@@ -4,6 +4,10 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('./pool');
 
 async function seed() {
+  if (!process.env.SEED_ADMIN_PASSWORD) {
+    throw new Error('SEED_ADMIN_PASSWORD is not set. Refusing to seed with a hardcoded fallback password.');
+  }
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -11,7 +15,7 @@ async function seed() {
     // --- Admin user (bootstrap — /auth/register requires an admin,
     // so the very first one has to be created directly) ---
     const adminEmail = 'admin@bjnexus.local';
-    const adminPasswordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || 'ChangeMe123!', 12);
+    const adminPasswordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 12);
     const adminRes = await client.query(
       `INSERT INTO users (email, password_hash, role, display_name)
        VALUES ($1, $2, 'admin', 'Seed Admin')
@@ -46,7 +50,7 @@ async function seed() {
     const unitId = unitRes.rows[0].id;
 
     // --- Client-role user, scoped to that client ---
-    const clientUserPasswordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || 'ChangeMe123!', 12);
+    const clientUserPasswordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 12);
     const clientUserRes = await client.query(
       `INSERT INTO users (email, password_hash, role, client_id, display_name)
        VALUES ($1, $2, 'client', $3, 'Sample Building Manager')
