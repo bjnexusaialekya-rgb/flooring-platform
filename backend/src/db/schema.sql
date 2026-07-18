@@ -74,6 +74,7 @@ CREATE TABLE users (
     role TEXT NOT NULL CHECK (role IN ('client', 'staff', 'admin')),
     client_id UUID REFERENCES clients(id) ON DELETE SET NULL, -- set for role='client'
     display_name TEXT NOT NULL,
+    property_id UUID REFERENCES properties(id) ON DELETE SET NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
